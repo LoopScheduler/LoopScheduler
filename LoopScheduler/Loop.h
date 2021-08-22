@@ -2,15 +2,28 @@
 
 #include "LoopScheduler.dec.h"
 
+#include <memory>
+#include <shared_mutex>
+
 namespace LoopScheduler
 {
+    /// @brief Runs a multi-threaded loop using an architecture defined by Group objects.
     class Loop final
     {
     public:
-        Loop(Group Architecture);
+        Loop(std::shared_ptr<Group> Architecture);
         ~Loop();
 
-        void Start();
+        /// @brief Starts the loop. An exception will be thrown if called more than once without a Stop() in between.
+        /// @param threads_count The number of threads to allocate. The default is the number of logical CPU cores.
+        void Start(int threads_count = 0);
+        /// @brief Stops the loop. Won't do anything if the loop isn't running.
         void Stop();
+        /// @brief Returns whether the loop is running.
+        bool IsRunning();
+    private:
+        std::shared_ptr<Group> Architecture;
+        std::shared_mutex Mutex;
+        bool _IsRunning;
     };
 }

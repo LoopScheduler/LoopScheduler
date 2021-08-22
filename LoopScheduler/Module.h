@@ -2,6 +2,8 @@
 
 #include "LoopScheduler.dec.h"
 
+#include <memory>
+
 namespace LoopScheduler
 {
     class Module
@@ -10,8 +12,9 @@ namespace LoopScheduler
     public:
         virtual ~Module();
     protected:
-        virtual Module(TimeSpanPredictor ExecutionTimePredictor)
-        virtual Run() = 0;
+        Module();
+        Module(std::shared_ptr<TimeSpanPredictor> ExecutionTimePredictor);
+        virtual void Run() = 0;
 
         class IdlingToken
         {
@@ -19,15 +22,15 @@ namespace LoopScheduler
         public:
             void Stop();
         private:
-            Module Creator;
-        }
+            std::weak_ptr<Module> Creator;
+        };
 
         void Idle(double min_waiting_time);
         IdlingToken StartIdling(double max_waiting_time_after_stop, double total_max_waiting_time = 0);
     private:
-        virtual _Run(); // Used by Group
+        virtual void _Run(); // Used by Group
 
-        TimeSpanPredictor ExecutionTimePredictor; // Accessed by Group
+        std::shared_ptr<TimeSpanPredictor> ExecutionTimePredictor; // Accessed by Group
         bool IsIdling; // To detect StartIdling being called more than once
     };
 }

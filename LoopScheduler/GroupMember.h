@@ -7,6 +7,8 @@
 
 namespace LoopScheduler
 {
+    /// @brief Represents a group member of either another group or a module.
+    ///        Used by SequentialGroup and ParallelGroup.
     struct GroupMember final
     {
     public:
