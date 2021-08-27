@@ -12,8 +12,7 @@ namespace LoopScheduler
     public:
         virtual ~Module();
     protected:
-        Module();
-        Module(std::shared_ptr<TimeSpanPredictor> ExecutionTimePredictor);
+        Module(std::shared_ptr<TimeSpanPredictor> ExecutionTimePredictor = std::shared_ptr<TimeSpanPredictor>());
         virtual void Run() = 0;
 
         class IdlingToken
