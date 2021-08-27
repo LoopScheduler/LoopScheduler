@@ -21,10 +21,9 @@ namespace LoopScheduler
         virtual bool RunNextModule(double MaxEstimatedExecutionTime = 0) = 0;
         /// @brief Thread-safe method to check whether the group is ready to finish the iteration.
         virtual bool IsDone() = 0;
-        /// @brief Waits until the current iteration is done.
-        virtual bool WaitUntilDone() = 0;
+        /// @brief Waits until a next module is available to run.
+        virtual void WaitForNextModule() = 0;
         /// @brief Thread-safe method to start a new iteration.
-        /// @return Whether the group was done running the last iteration.
-        virtual bool StartNextIteration() = 0;
+        virtual void StartNextIteration() = 0;
     };
 }

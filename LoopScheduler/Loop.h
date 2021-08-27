@@ -2,8 +2,9 @@
 
 #include "LoopScheduler.dec.h"
 
+#include <condition_variable>
 #include <memory>
-#include <shared_mutex>
+#include <mutex>
 
 namespace LoopScheduler
 {
@@ -23,7 +24,10 @@ namespace LoopScheduler
         bool IsRunning();
     private:
         std::shared_ptr<Group> Architecture;
-        std::shared_mutex Mutex;
+        std::mutex Mutex;
+        std::condition_variable ConditionVariable;
+        /// @brief Only set in Start()
         bool _IsRunning;
+        bool ShouldStop;
     };
 }

@@ -16,8 +16,8 @@ namespace LoopScheduler
         virtual std::weak_ptr<Module> GetNextModule() override;
         virtual bool RunNextModule(double MaxEstimatedExecutionTime = 0) override;
         virtual bool IsDone() override;
-        virtual bool WaitUntilDone() override;
-        virtual bool StartNextIteration() override;
+        virtual void WaitForNextModule() override;
+        virtual void StartNextIteration() override;
     private:
         std::vector<GroupMember> Members;
     };
