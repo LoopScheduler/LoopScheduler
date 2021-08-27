@@ -3,7 +3,6 @@
 #include "LoopScheduler.dec.h"
 #include "Group.h"
 
-#include <initializer_list>
 #include <vector>
 
 namespace LoopScheduler
@@ -11,7 +10,7 @@ namespace LoopScheduler
     class ParallelGroup final : public Group
     {
     public:
-        ParallelGroup(std::initializer_list<GroupMember>);
+        ParallelGroup(std::vector<GroupMember>);
     protected:
         virtual std::weak_ptr<Module> GetNextModule() override;
         virtual bool RunNextModule(double MaxEstimatedExecutionTime = 0) override;
