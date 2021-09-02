@@ -118,15 +118,20 @@ namespace LoopScheduler
     {
         // NO MUTEX LOCK
         return CurrentMemberIndex != -1
-            && std::holds_alternative<std::shared_ptr<Group>>(Members[CurrentMemberIndex]);
+            && std::holds_alternative<std::shared_ptr<Group>>(Members[CurrentMemberIndex])
+            && !std::get<std::shared_ptr<Group>>(Members[CurrentMemberIndex])->IsDone();
     }
     inline bool SequentialGroup::ShouldIncrementCurrentMemberIndex()
     {
         // NO MUTEX LOCK
-        return (CurrentMemberIndex < Members.size() - 1) && (
+        return (RunningThreadsCount == 0)
+            && (CurrentMemberIndex < Members.size() - 1)
+            && (
                 CurrentMemberIndex == -1
-                || std::holds_alternative<std::shared_ptr<Module>>(Members[CurrentMemberIndex])
-                || std::get<std::shared_ptr<Group>>(Members[CurrentMemberIndex])->IsDone()
+                || (std::holds_alternative<std::shared_ptr<Module>>(Members[CurrentMemberIndex])
+                    && CurrentMemberRunsCount != 0)
+                || (std::holds_alternative<std::shared_ptr<Group>>(Members[CurrentMemberIndex])
+                    &&std::get<std::shared_ptr<Group>>(Members[CurrentMemberIndex])->IsDone())
             );
     }
 }
