@@ -12,10 +12,9 @@ namespace LoopScheduler
     public:
         ParallelGroup(std::vector<ParallelGroupMember>);
     protected:
-        virtual std::weak_ptr<Module> GetNextModule() override;
         virtual bool RunNextModule(double MaxEstimatedExecutionTime = 0) override;
+        virtual void WaitForNextEvent() override;
         virtual bool IsDone() override;
-        virtual void WaitForNextModule() override;
         virtual void StartNextIteration() override;
     private:
         std::vector<ParallelGroupMember> Members;

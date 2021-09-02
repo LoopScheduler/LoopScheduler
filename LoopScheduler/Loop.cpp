@@ -61,7 +61,7 @@ namespace LoopScheduler
                         }
 
                         if (!Architecture->RunNextModule())
-                            Architecture->WaitForNextModule();
+                            Architecture->WaitForNextEvent();
                     }
                 })
             );
