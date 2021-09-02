@@ -96,8 +96,9 @@ namespace LoopScheduler
                && (RunningThreadsCount == 0)
                && (
                     CurrentMemberIndex == -1
-                    || std::holds_alternative<std::shared_ptr<Module>>(Members[CurrentMemberIndex])
-                    || std::get<std::shared_ptr<Group>>(Members[CurrentMemberIndex])->IsDone()
+                    || (std::holds_alternative<std::shared_ptr<Module>>(Members[CurrentMemberIndex]) ?
+                        (CurrentMemberRunsCount != 0)
+                        : (std::get<std::shared_ptr<Group>>(Members[CurrentMemberIndex])->IsDone()))
                 );
     }
 
