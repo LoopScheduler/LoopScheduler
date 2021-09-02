@@ -77,6 +77,7 @@ namespace LoopScheduler
             }
             if (ShouldTryRunNextGroupFromCurrentMemberIndex()) // Can wait for the group.
             {
+                lock.unlock();
                 std::get<std::shared_ptr<Group>>(Members[CurrentMemberIndex])->WaitForNextEvent();
                 return true;
             }
