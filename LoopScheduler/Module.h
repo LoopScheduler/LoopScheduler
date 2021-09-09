@@ -16,7 +16,7 @@ namespace LoopScheduler
         /// @brief Returns the predicted timespan.
         double PredictExecutionTime();
     protected:
-        Module(std::shared_ptr<TimeSpanPredictor> ExecutionTimePredictor = std::shared_ptr<TimeSpanPredictor>());
+        Module(std::unique_ptr<TimeSpanPredictor> ExecutionTimePredictor = std::unique_ptr<TimeSpanPredictor>());
         virtual void OnRun() = 0;
 
         class IdlingToken
@@ -31,7 +31,7 @@ namespace LoopScheduler
         void Idle(double min_waiting_time);
         IdlingToken StartIdling(double max_waiting_time_after_stop, double total_max_waiting_time = 0);
     private:
-        std::shared_ptr<TimeSpanPredictor> ExecutionTimePredictor; // Accessed by Group
+        std::unique_ptr<TimeSpanPredictor> ExecutionTimePredictor; // Accessed by Group
         bool IsIdling; // To detect StartIdling being called more than once
     };
 }
