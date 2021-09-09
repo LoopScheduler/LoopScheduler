@@ -72,18 +72,6 @@ namespace LoopScheduler
         return false;
     }
 
-    double SequentialGroup::PredictHigherRemainingExecutionTime()
-    {
-        std::shared_lock<std::shared_mutex> lock(MembersSharedMutex);
-        return PredictRemainingExecutionTimeNoLock<true>();
-    }
-
-    double SequentialGroup::PredictLowerRemainingExecutionTime()
-    {
-        std::shared_lock<std::shared_mutex> lock(MembersSharedMutex);
-        return PredictRemainingExecutionTimeNoLock<false>();
-    }
-
     void SequentialGroup::WaitForNextEvent(double MaxEstimatedExecutionTime)
     {
         std::unique_lock<std::mutex> lock(NextEventConditionMutex);
@@ -128,6 +116,18 @@ namespace LoopScheduler
     {
         std::unique_lock<std::shared_mutex> lock(MembersSharedMutex);
         CurrentMemberIndex = -1;
+    }
+
+    double SequentialGroup::PredictHigherRemainingExecutionTime()
+    {
+        std::shared_lock<std::shared_mutex> lock(MembersSharedMutex);
+        return PredictRemainingExecutionTimeNoLock<true>();
+    }
+
+    double SequentialGroup::PredictLowerRemainingExecutionTime()
+    {
+        std::shared_lock<std::shared_mutex> lock(MembersSharedMutex);
+        return PredictRemainingExecutionTimeNoLock<false>();
     }
 
     inline bool SequentialGroup::ShouldRunNextModuleFromCurrentMemberIndex(double MaxEstimatedExecutionTime)

@@ -14,8 +14,12 @@ namespace LoopScheduler
         /// @brief Used by Group
         void Run();
         /// @brief Returns the higher predicted timespan in seconds.
+        ///
+        /// Thread-safe
         double PredictHigherExecutionTime();
         /// @brief Returns the lower predicted timespan in seconds.
+        ///
+        /// Thread-safe
         double PredictLowerExecutionTime();
     protected:
         Module(

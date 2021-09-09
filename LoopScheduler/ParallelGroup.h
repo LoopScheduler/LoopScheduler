@@ -16,11 +16,11 @@ namespace LoopScheduler
         ParallelGroup(std::vector<ParallelGroupMember>);
     protected:
         virtual bool RunNextModule(double MaxEstimatedExecutionTime = 0) override;
-        virtual double PredictHigherRemainingExecutionTime() override;
-        virtual double PredictLowerRemainingExecutionTime() override;
         virtual void WaitForNextEvent(double MaxEstimatedExecutionTime = 0) override;
         virtual bool IsDone() override;
         virtual void StartNextIteration() override;
+        virtual double PredictHigherRemainingExecutionTime() override;
+        virtual double PredictLowerRemainingExecutionTime() override;
     private:
         /// @brief 0 by default
         class integer
