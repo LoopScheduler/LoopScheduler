@@ -187,7 +187,10 @@ namespace LoopScheduler
         else
         {
             // Double mutex lock can occur if there's a loop.
-            std::get<std::shared_ptr<Group>>(Members[CurrentMemberIndex])->PredictRemainingExecutionTime();
+            return std::max(
+                std::get<std::shared_ptr<Group>>(Members[CurrentMemberIndex])->PredictRemainingExecutionTime(),
+                0.000001
+            );
         }
     }
 }
