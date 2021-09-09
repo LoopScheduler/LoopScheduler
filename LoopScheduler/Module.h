@@ -13,10 +13,18 @@ namespace LoopScheduler
 
         /// @brief Used by Group
         void Run();
-        /// @brief Returns the predicted timespan.
-        double PredictExecutionTime();
+        /// @brief Returns the higher predicted timespan in seconds.
+        double PredictHigherExecutionTime();
+        /// @brief Returns the average predicted timespan in seconds.
+        double PredictAverageExecutionTime();
+        /// @brief Returns the lower predicted timespan in seconds.
+        double PredictLowerExecutionTime();
     protected:
-        Module(std::unique_ptr<TimeSpanPredictor> ExecutionTimePredictor = std::unique_ptr<TimeSpanPredictor>());
+        Module(
+            std::unique_ptr<TimeSpanPredictor> HigherExecutionTimePredictor = std::unique_ptr<TimeSpanPredictor>(),
+            std::unique_ptr<TimeSpanPredictor> AverageExecutionTimePredictor = std::unique_ptr<TimeSpanPredictor>(),
+            std::unique_ptr<TimeSpanPredictor> LowerExecutionTimePredictor = std::unique_ptr<TimeSpanPredictor>()
+        );
         virtual void OnRun() = 0;
 
         class IdlingToken
@@ -31,7 +39,9 @@ namespace LoopScheduler
         void Idle(double min_waiting_time);
         IdlingToken StartIdling(double max_waiting_time_after_stop, double total_max_waiting_time = 0);
     private:
-        std::unique_ptr<TimeSpanPredictor> ExecutionTimePredictor; // Accessed by Group
+        std::unique_ptr<TimeSpanPredictor> HigherExecutionTimePredictor;
+        std::unique_ptr<TimeSpanPredictor> AverageExecutionTimePredictor;
+        std::unique_ptr<TimeSpanPredictor> LowerExecutionTimePredictor;
         bool IsIdling; // To detect StartIdling being called more than once
     };
 }
