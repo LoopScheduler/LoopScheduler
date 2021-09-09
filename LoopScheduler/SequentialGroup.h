@@ -18,7 +18,8 @@ namespace LoopScheduler
         SequentialGroup(std::vector<std::variant<std::shared_ptr<Group>, std::shared_ptr<Module>>>);
     protected:
         virtual bool RunNextModule(double MaxEstimatedExecutionTime = 0) override;
-        virtual double PredictRemainingExecutionTime() override;
+        virtual double PredictRemainingHigherExecutionTime() override;
+        virtual double PredictRemainingLowerExecutionTime() override;
         virtual void WaitForNextEvent(double MaxEstimatedExecutionTime = 0) override;
         virtual bool IsDone() override;
         virtual void StartNextIteration() override;
@@ -32,7 +33,8 @@ namespace LoopScheduler
         int RunningThreadsCount;
 
         std::chrono::steady_clock::time_point LastModuleStartTime;
-        double LastModulePredictedTimeSpan;
+        double LastModuleHigherPredictedTimeSpan;
+        double LastModuleLowerPredictedTimeSpan;
 
         std::mutex NextEventConditionMutex;
         std::condition_variable NextEventConditionVariable;
@@ -62,6 +64,9 @@ namespace LoopScheduler
         /// NO MUTEX LOCK
         inline bool ShouldIncrementCurrentMemberIndex();
         /// NO MUTEX LOCK
+        template <bool Higher>
         inline double PredictRemainingExecutionTimeNoLock();
     };
+    template<> double SequentialGroup::PredictRemainingExecutionTimeNoLock<true>();
+    template<> double SequentialGroup::PredictRemainingExecutionTimeNoLock<false>();
 }

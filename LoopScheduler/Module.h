@@ -15,14 +15,11 @@ namespace LoopScheduler
         void Run();
         /// @brief Returns the higher predicted timespan in seconds.
         double PredictHigherExecutionTime();
-        /// @brief Returns the average predicted timespan in seconds.
-        double PredictAverageExecutionTime();
         /// @brief Returns the lower predicted timespan in seconds.
         double PredictLowerExecutionTime();
     protected:
         Module(
             std::unique_ptr<TimeSpanPredictor> HigherExecutionTimePredictor = std::unique_ptr<TimeSpanPredictor>(),
-            std::unique_ptr<TimeSpanPredictor> AverageExecutionTimePredictor = std::unique_ptr<TimeSpanPredictor>(),
             std::unique_ptr<TimeSpanPredictor> LowerExecutionTimePredictor = std::unique_ptr<TimeSpanPredictor>()
         );
         virtual void OnRun() = 0;
@@ -40,7 +37,6 @@ namespace LoopScheduler
         IdlingToken StartIdling(double max_waiting_time_after_stop, double total_max_waiting_time = 0);
     private:
         std::unique_ptr<TimeSpanPredictor> HigherExecutionTimePredictor;
-        std::unique_ptr<TimeSpanPredictor> AverageExecutionTimePredictor;
         std::unique_ptr<TimeSpanPredictor> LowerExecutionTimePredictor;
         bool IsIdling; // To detect StartIdling being called more than once
     };

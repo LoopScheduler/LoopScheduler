@@ -47,7 +47,8 @@ namespace LoopScheduler
                 CurrentMemberRunsCount++;
                 auto& member = std::get<std::shared_ptr<Module>>(Members[CurrentMemberIndex]);
                 LastModuleStartTime = std::chrono::steady_clock::now();
-                LastModulePredictedTimeSpan = member->PredictLowerExecutionTime();
+                LastModuleHigherPredictedTimeSpan = member->PredictHigherExecutionTime();
+                LastModuleLowerPredictedTimeSpan = member->PredictLowerExecutionTime();
                 lock.unlock();
                 member->Run();
             }
@@ -71,10 +72,16 @@ namespace LoopScheduler
         return false;
     }
 
-    double SequentialGroup::PredictRemainingExecutionTime()
+    double SequentialGroup::PredictRemainingHigherExecutionTime()
     {
         std::shared_lock<std::shared_mutex> lock(MembersSharedMutex);
-        return PredictRemainingExecutionTimeNoLock();
+        return PredictRemainingExecutionTimeNoLock<true>();
+    }
+
+    double SequentialGroup::PredictRemainingLowerExecutionTime()
+    {
+        std::shared_lock<std::shared_mutex> lock(MembersSharedMutex);
+        return PredictRemainingExecutionTimeNoLock<false>();
     }
 
     void SequentialGroup::WaitForNextEvent(double MaxEstimatedExecutionTime)
@@ -145,9 +152,9 @@ namespace LoopScheduler
                 if (RunningThreadsCount != 0) // Else: either ShouldIncrement... or IsDone
                 {
                     if (InputMaxEstimatedExecutionTime == 0)
-                        OutputMaxEstimatedExecutionTime = PredictRemainingExecutionTimeNoLock();
+                        OutputMaxEstimatedExecutionTime = PredictRemainingExecutionTimeNoLock<false>();
                     else
-                        OutputMaxEstimatedExecutionTime = std::min(InputMaxEstimatedExecutionTime, PredictRemainingExecutionTimeNoLock());
+                        OutputMaxEstimatedExecutionTime = std::min(InputMaxEstimatedExecutionTime, PredictRemainingExecutionTimeNoLock<false>());
                     return true;
                 }
             }
@@ -171,6 +178,7 @@ namespace LoopScheduler
                     : (std::get<std::shared_ptr<Group>>(Members[CurrentMemberIndex])->IsDone()))
             );
     }
+    template <bool Higher>
     inline double SequentialGroup::PredictRemainingExecutionTimeNoLock()
     {
         // NO MUTEX LOCK
@@ -179,18 +187,31 @@ namespace LoopScheduler
         if (std::holds_alternative<std::shared_ptr<Module>>(Members[CurrentMemberIndex]))
         {
             std::chrono::duration<double> duration = std::chrono::steady_clock::now() - LastModuleStartTime;
-            return std::max(
-                duration.count() + LastModulePredictedTimeSpan,
-                0.000001
-            );
+            if constexpr (Higher)
+                return std::max(
+                    duration.count() + LastModuleHigherPredictedTimeSpan,
+                    0.000001
+                );
+            else
+                return std::max(
+                    duration.count() + LastModuleLowerPredictedTimeSpan,
+                    0.000001
+                );
+            
         }
         else
         {
             // Double mutex lock can occur if there's a loop.
-            return std::max(
-                std::get<std::shared_ptr<Group>>(Members[CurrentMemberIndex])->PredictRemainingExecutionTime(),
-                0.000001
-            );
+            if constexpr (Higher)
+                return std::max(
+                    std::get<std::shared_ptr<Group>>(Members[CurrentMemberIndex])->PredictRemainingHigherExecutionTime(),
+                    0.000001
+                );
+            else
+                return std::max(
+                    std::get<std::shared_ptr<Group>>(Members[CurrentMemberIndex])->PredictRemainingLowerExecutionTime(),
+                    0.000001
+                );
         }
     }
 }
