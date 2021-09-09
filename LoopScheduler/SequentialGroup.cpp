@@ -1,7 +1,6 @@
 #include "SequentialGroup.h"
 
 #include <thread>
-#include <utility>
 
 #include "Module.h"
 
@@ -39,7 +38,7 @@ namespace LoopScheduler
             CurrentMemberIndex++;
             CurrentMemberRunsCount = 0;
         }
-        if (ShouldRunNextModuleFromCurrentMemberIndex())
+        if (ShouldRunNextModuleFromCurrentMemberIndex(MaxEstimatedExecutionTime))
         {
             {
                 IncrementGuardLockingOnDecrement increment_guard(RunningThreadsCount, lock);
@@ -57,7 +56,7 @@ namespace LoopScheduler
                 IncrementGuardLockingOnDecrement increment_guard(RunningThreadsCount, lock);
                 CurrentMemberRunsCount++;
                 lock.unlock();
-                success = std::get<std::shared_ptr<Group>>(Members[CurrentMemberIndex])->RunNextModule();
+                success = std::get<std::shared_ptr<Group>>(Members[CurrentMemberIndex])->RunNextModule(MaxEstimatedExecutionTime);
             }
             NextEventConditionVariable.notify_all();
             return success;
@@ -65,20 +64,20 @@ namespace LoopScheduler
         return false;
     }
 
-    void SequentialGroup::WaitForNextEvent()
+    void SequentialGroup::WaitForNextEvent(double MaxEstimatedExecutionTime)
     {
         std::unique_lock<std::mutex> lock(NextEventConditionMutex);
-        NextEventConditionVariable.wait(lock, [this] {
+        NextEventConditionVariable.wait(lock, [this, &MaxEstimatedExecutionTime] {
             std::shared_lock<std::shared_mutex> lock(MembersSharedMutex);
             if (ShouldIncrementCurrentMemberIndex()
-                || ShouldRunNextModuleFromCurrentMemberIndex()) // There is a next module to run.
+                || ShouldRunNextModuleFromCurrentMemberIndex(MaxEstimatedExecutionTime)) // There is a next module to run.
             {
                 return true;
             }
             if (ShouldTryRunNextGroupFromCurrentMemberIndex()) // Can wait for the group.
             {
                 lock.unlock();
-                std::get<std::shared_ptr<Group>>(Members[CurrentMemberIndex])->WaitForNextEvent();
+                std::get<std::shared_ptr<Group>>(Members[CurrentMemberIndex])->WaitForNextEvent(MaxEstimatedExecutionTime);
                 return true;
             }
             if ((CurrentMemberIndex == Members.size() - 1)
@@ -109,12 +108,15 @@ namespace LoopScheduler
         CurrentMemberIndex = -1;
     }
 
-    inline bool SequentialGroup::ShouldRunNextModuleFromCurrentMemberIndex()
+    inline bool SequentialGroup::ShouldRunNextModuleFromCurrentMemberIndex(double MaxEstimatedExecutionTime)
     {
         // NO MUTEX LOCK
         return RunningThreadsCount == 0 && CurrentMemberRunsCount == 0
             && CurrentMemberIndex != -1
-            && std::holds_alternative<std::shared_ptr<Module>>(Members[CurrentMemberIndex]);
+            && std::holds_alternative<std::shared_ptr<Module>>(Members[CurrentMemberIndex])
+            && (MaxEstimatedExecutionTime == 0
+                || std::get<std::shared_ptr<Module>>(Members[CurrentMemberIndex])->PredictExecutionTime()
+                    <= MaxEstimatedExecutionTime);
     }
     inline bool SequentialGroup::ShouldTryRunNextGroupFromCurrentMemberIndex()
     {

@@ -17,7 +17,7 @@ namespace LoopScheduler
         SequentialGroup(std::vector<std::variant<std::shared_ptr<Group>, std::shared_ptr<Module>>>);
     protected:
         virtual bool RunNextModule(double MaxEstimatedExecutionTime = 0) override;
-        virtual void WaitForNextEvent() override;
+        virtual void WaitForNextEvent(double MaxEstimatedExecutionTime = 0) override;
         virtual bool IsDone() override;
         virtual void StartNextIteration() override;
     private:
@@ -38,7 +38,7 @@ namespace LoopScheduler
         ///        = false
         ///
         /// NO MUTEX LOCK
-        inline bool ShouldRunNextModuleFromCurrentMemberIndex();
+        inline bool ShouldRunNextModuleFromCurrentMemberIndex(double MaxEstimatedExecutionTime);
         /// @brief ShouldRunNextModuleFromCurrentMemberIndex
         ///        && ShouldTryRunNextGroupFromCurrentMemberIndex
         ///        && ShouldIncrementCurrentMemberIndex
