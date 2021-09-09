@@ -72,13 +72,13 @@ namespace LoopScheduler
         return false;
     }
 
-    double SequentialGroup::PredictRemainingHigherExecutionTime()
+    double SequentialGroup::PredictHigherRemainingExecutionTime()
     {
         std::shared_lock<std::shared_mutex> lock(MembersSharedMutex);
         return PredictRemainingExecutionTimeNoLock<true>();
     }
 
-    double SequentialGroup::PredictRemainingLowerExecutionTime()
+    double SequentialGroup::PredictLowerRemainingExecutionTime()
     {
         std::shared_lock<std::shared_mutex> lock(MembersSharedMutex);
         return PredictRemainingExecutionTimeNoLock<false>();
@@ -204,12 +204,12 @@ namespace LoopScheduler
             // Double mutex lock can occur if there's a loop.
             if constexpr (Higher)
                 return std::max(
-                    std::get<std::shared_ptr<Group>>(Members[CurrentMemberIndex])->PredictRemainingHigherExecutionTime(),
+                    std::get<std::shared_ptr<Group>>(Members[CurrentMemberIndex])->PredictHigherRemainingExecutionTime(),
                     0.000001
                 );
             else
                 return std::max(
-                    std::get<std::shared_ptr<Group>>(Members[CurrentMemberIndex])->PredictRemainingLowerExecutionTime(),
+                    std::get<std::shared_ptr<Group>>(Members[CurrentMemberIndex])->PredictLowerRemainingExecutionTime(),
                     0.000001
                 );
         }

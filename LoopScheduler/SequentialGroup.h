@@ -18,8 +18,8 @@ namespace LoopScheduler
         SequentialGroup(std::vector<std::variant<std::shared_ptr<Group>, std::shared_ptr<Module>>>);
     protected:
         virtual bool RunNextModule(double MaxEstimatedExecutionTime = 0) override;
-        virtual double PredictRemainingHigherExecutionTime() override;
-        virtual double PredictRemainingLowerExecutionTime() override;
+        virtual double PredictHigherRemainingExecutionTime() override;
+        virtual double PredictLowerRemainingExecutionTime() override;
         virtual void WaitForNextEvent(double MaxEstimatedExecutionTime = 0) override;
         virtual bool IsDone() override;
         virtual void StartNextIteration() override;
