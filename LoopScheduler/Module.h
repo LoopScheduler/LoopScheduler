@@ -11,8 +11,29 @@ namespace LoopScheduler
     public:
         virtual ~Module();
 
-        /// @brief Used by Group
-        void Run();
+        class RunningToken // TODO: Implement parallel run ability.
+        {
+            friend Module;
+        public:
+            ~RunningToken();
+            /// @brief Whether running is permitted.
+            bool CanRun();
+            /// @brief This only works once per object, if CanRun() returns true.
+            void Run();
+        private:
+            std::weak_ptr<Module> Creator;
+        };
+
+        /// @brief Used by Group.
+        ///        Gets a running token to check whether it's possible to run and then run,
+        ///        while reserving that run.
+        RunningToken GetRunningToken();
+        /// @brief Waits until it's permitted to run the module.
+        void WaitForRunAvailability(double MaxWaitingTime = 0);
+        /// @brief Whether the module is running.
+        ///
+        /// Thread-safe
+        bool IsRunning();
         /// @brief Returns the higher predicted timespan in seconds.
         ///
         /// Thread-safe
@@ -32,6 +53,9 @@ namespace LoopScheduler
         {
             friend Module;
         public:
+            ~IdlingToken();
+            /// @brief Stops idling. Only works once.
+            ///        It's automatically done if the object is destructed.
             void Stop();
         private:
             std::weak_ptr<Module> Creator;

@@ -16,11 +16,9 @@ namespace LoopScheduler
         /// @param CanRunInParallel Whether the module can run in another thread while it's already running.
         ParallelGroupMember(
             std::variant<std::shared_ptr<Group>, std::shared_ptr<Module>> Member,
-            bool CanRunMoreThanOncePreCycle = false,
-            bool CanRunInParallel = false
+            bool CanRunMoreThanOncePreCycle = false
         );
         std::variant<std::shared_ptr<Group>, std::shared_ptr<Module>> Member;
         bool CanRunMoreThanOncePreCycle;
-        bool CanRunInParallel;
     };
 }

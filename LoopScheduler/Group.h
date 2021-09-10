@@ -16,7 +16,8 @@ namespace LoopScheduler
         virtual bool RunNextModule(double MaxEstimatedExecutionTime = 0) = 0;
         /// @brief Waits until a next module is available to run or IsDone returns true.
         ///        May give false positive (return when there is no module to run).
-        virtual void WaitForNextEvent(double MaxEstimatedExecutionTime = 0) = 0;
+        /// @param MaxWaitingTime Maximum time to wait in seconds.
+        virtual void WaitForNextEvent(double MaxEstimatedExecutionTime = 0, double MaxWaitingTime = 0) = 0;
         /// @brief Thread-safe method to check whether the group is ready to finish the iteration.
         virtual bool IsDone() = 0;
         /// @brief Thread-safe method to start a new iteration.

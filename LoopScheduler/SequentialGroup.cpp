@@ -39,23 +39,28 @@ namespace LoopScheduler
             CurrentMemberIndex++;
             CurrentMemberRunsCount = 0;
         }
-        double max_time;
         if (ShouldRunNextModuleFromCurrentMemberIndex(MaxEstimatedExecutionTime))
         {
+            auto& member = std::get<std::shared_ptr<Module>>(Members[CurrentMemberIndex]);
+            auto token = member->GetRunningToken();
+            if (token.CanRun())
             {
                 IncrementGuardLockingOnDecrement increment_guard(RunningThreadsCount, lock);
                 CurrentMemberRunsCount++;
-                auto& member = std::get<std::shared_ptr<Module>>(Members[CurrentMemberIndex]);
                 LastModuleStartTime = std::chrono::steady_clock::now();
                 LastModuleHigherPredictedTimeSpan = member->PredictHigherExecutionTime();
                 LastModuleLowerPredictedTimeSpan = member->PredictLowerExecutionTime();
                 lock.unlock();
-                member->Run();
+                token.Run();
+            }
+            else
+            {
+                return false;
             }
             NextEventConditionVariable.notify_all();
             return true;
         }
-        else if (ShouldTryRunNextGroupFromCurrentMemberIndex(MaxEstimatedExecutionTime, max_time))
+        else if (double max_time; ShouldTryRunNextGroupFromCurrentMemberIndex(MaxEstimatedExecutionTime, max_time))
         {
             bool success = false;
             {
@@ -72,22 +77,49 @@ namespace LoopScheduler
         return false;
     }
 
-    void SequentialGroup::WaitForNextEvent(double MaxEstimatedExecutionTime)
+    void SequentialGroup::WaitForNextEvent(double MaxEstimatedExecutionTime, double MaxWaitingTime)
     {
         std::unique_lock<std::mutex> lock(NextEventConditionMutex);
-        NextEventConditionVariable.wait(lock, [this, &MaxEstimatedExecutionTime] {
+
+        std::chrono::time_point<std::chrono::steady_clock> start;
+        if (MaxWaitingTime != 0)
+            start = std::chrono::steady_clock::now();
+
+        const auto predicate = [this, &MaxEstimatedExecutionTime, &MaxWaitingTime, &start] {
             std::shared_lock<std::shared_mutex> lock(MembersSharedMutex);
             if (ShouldIncrementCurrentMemberIndex()
                 || ShouldRunNextModuleFromCurrentMemberIndex(MaxEstimatedExecutionTime)) // There is a next module to run.
             {
+                auto& member = std::get<std::shared_ptr<Module>>(Members[CurrentMemberIndex]);
+                lock.unlock();
+                if (MaxWaitingTime == 0)
+                {
+                    member->WaitForRunAvailability();
+                }
+                else
+                {
+                    auto stop = start + std::chrono::duration<double>(MaxWaitingTime);
+                    std::chrono::duration<double> time = stop - std::chrono::steady_clock::now();
+                    double t = time.count();
+                    if (t > 0)
+                        member->WaitForRunAvailability(t);
+                }
                 return true;
             }
-            double max_time;
-            if (ShouldTryRunNextGroupFromCurrentMemberIndex(MaxEstimatedExecutionTime, max_time)) // Can wait for the group.
+            if (double max_exec_time; ShouldTryRunNextGroupFromCurrentMemberIndex(MaxEstimatedExecutionTime, max_exec_time)) // Can wait for the group.
             {
                 auto& member = std::get<std::shared_ptr<Group>>(Members[CurrentMemberIndex]);
                 lock.unlock();
-                member->WaitForNextEvent(max_time);
+                if (MaxWaitingTime == 0)
+                    member->WaitForNextEvent(max_exec_time);
+                else
+                {
+                    auto stop = start + std::chrono::duration<double>(MaxWaitingTime);
+                    std::chrono::duration<double> time = stop - std::chrono::steady_clock::now();
+                    double t = time.count();
+                    if (t > 0)
+                        member->WaitForNextEvent(max_exec_time, t);
+                }
                 return true;
             }
             if ((CurrentMemberIndex == Members.size() - 1)
@@ -96,7 +128,12 @@ namespace LoopScheduler
                 return true;
             }
             return false;
-        });
+        };
+
+        if (MaxWaitingTime == 0)
+            NextEventConditionVariable.wait(lock, predicate);
+        else if (MaxWaitingTime > 0)
+            NextEventConditionVariable.wait_for(lock, std::chrono::duration<double>(MaxWaitingTime), predicate);
     }
 
     bool SequentialGroup::IsDone()

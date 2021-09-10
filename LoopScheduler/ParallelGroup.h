@@ -16,7 +16,7 @@ namespace LoopScheduler
         ParallelGroup(std::vector<ParallelGroupMember>);
     protected:
         virtual bool RunNextModule(double MaxEstimatedExecutionTime = 0) override;
-        virtual void WaitForNextEvent(double MaxEstimatedExecutionTime = 0) override;
+        virtual void WaitForNextEvent(double MaxEstimatedExecutionTime = 0, double MaxWaitingTime = 0) override;
         virtual bool IsDone() override;
         virtual void StartNextIteration() override;
         virtual double PredictHigherRemainingExecutionTime() override;
