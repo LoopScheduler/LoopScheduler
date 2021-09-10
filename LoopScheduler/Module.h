@@ -43,7 +43,9 @@ namespace LoopScheduler
         /// Thread-safe
         double PredictLowerExecutionTime();
     protected:
+        /// @brief To change the default settings in the derived class.
         Module(
+            bool CanRunInParallel = false,
             std::unique_ptr<TimeSpanPredictor> HigherExecutionTimePredictor = std::unique_ptr<TimeSpanPredictor>(),
             std::unique_ptr<TimeSpanPredictor> LowerExecutionTimePredictor = std::unique_ptr<TimeSpanPredictor>()
         );
@@ -66,6 +68,7 @@ namespace LoopScheduler
     private:
         std::unique_ptr<TimeSpanPredictor> HigherExecutionTimePredictor;
         std::unique_ptr<TimeSpanPredictor> LowerExecutionTimePredictor;
+        bool CanRunInParallel;
         bool IsIdling; // To detect StartIdling being called more than once
     };
 }
