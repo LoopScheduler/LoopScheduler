@@ -12,6 +12,12 @@
 
 namespace LoopScheduler
 {
+    /// @brief A group that runs the subgroups and modules only once per iteration, in order and without overlapping.
+    ///
+    /// Each stage is done when the subgroup or module of that stage is done.
+    /// When a stage is done, the next stage starts ignoring whether the next stage's module can run.
+    /// The module or subgroup of a stage won't run in parallel with other stages.
+    /// A stage is defined as a member of a vector using the constructor.
     class SequentialGroup final : public Group
     {
     public:
@@ -24,6 +30,7 @@ namespace LoopScheduler
         virtual double PredictHigherRemainingExecutionTime() override;
         virtual double PredictLowerRemainingExecutionTime() override;
     private:
+        /// @brief A shared mutex for class members.
         std::shared_mutex MembersSharedMutex;
 
         std::vector<std::variant<std::shared_ptr<Group>, std::shared_ptr<Module>>> Members;

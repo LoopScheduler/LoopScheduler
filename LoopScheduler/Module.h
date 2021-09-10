@@ -12,7 +12,7 @@ namespace LoopScheduler
         virtual ~Module();
 
         class RunningToken // TODO: Implement parallel run ability.
-        {
+        {                  // TODO: Another class to handle this and WaitForRunAvailability behavior injected using constructor?
             friend Module;
         public:
             ~RunningToken();
@@ -26,9 +26,10 @@ namespace LoopScheduler
 
         /// @brief Used by Group.
         ///        Gets a running token to check whether it's possible to run and then run,
-        ///        while reserving that run.
+        ///        while reserving that run until the token is destructed or used.
         RunningToken GetRunningToken();
         /// @brief Waits until it's permitted to run the module.
+        ///        May give false positive (return when cannot run).
         void WaitForRunAvailability(double MaxWaitingTime = 0);
         /// @brief Whether the module is running.
         ///

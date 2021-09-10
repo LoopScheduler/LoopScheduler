@@ -33,6 +33,12 @@ namespace LoopScheduler
     protected:
         void CheckMemberGroupForLoops(Group*); // TODO: Implement loop detection
     private:
+        /// @brief Cannot have 2 parents, only be able to set when parent is destructed.
+        ///        Check for loops using this.
+        ///
+        /// Note: With each group only having 1 parent,
+        /// it's reliable to predict remaining execution times using the child groups.
+        /// Also having multiple children of the same group is possible.
         std::weak_ptr<Group> Parent;
     };
 }

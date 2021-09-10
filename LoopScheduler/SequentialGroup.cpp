@@ -1,7 +1,6 @@
 #include "SequentialGroup.h"
 
 #include <algorithm>
-#include <thread>
 
 #include "Module.h"
 
