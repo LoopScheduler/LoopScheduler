@@ -48,11 +48,6 @@ namespace LoopScheduler
         std::vector<std::shared_ptr<Group>> GroupMembers;
         std::list<int> MainQueue;
         std::list<int> SecondaryQueue;
-        /// @brief Used in WaitForNextEvent to notify itself.
-        ///
-        /// Each thread should wait for a member and finally notify and remove itself from the map.
-        /// New threads will be created only if they are terminated before (not contained in the map).
-        std::map<std::variant<std::shared_ptr<Group>, std::shared_ptr<Module>>, integer> WaitingAndNotifyingThreads;
         int RunningThreadsCount;
         int NotifyingCounter;
 
