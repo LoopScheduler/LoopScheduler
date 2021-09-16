@@ -147,6 +147,48 @@ namespace LoopScheduler
         return success;
     }
 
+    bool ParallelGroup::IsAvailable(double MaxEstimatedExecutionTime)
+    {
+        std::shared_lock<std::shared_mutex> lock(MembersSharedMutex);
+        return IsAvailableNoLock(MaxEstimatedExecutionTime);
+    }
+    bool ParallelGroup::IsAvailableNoLock(const double& MaxEstimatedExecutionTime)
+    {
+        for (auto& i : MainQueue)
+        {
+            if (std::holds_alternative<std::shared_ptr<Module>>(Members[i].Member))
+            {
+                auto& m = std::get<std::shared_ptr<Module>>(Members[i].Member);
+                if (MaxEstimatedExecutionTime != 0 && m->PredictHigherExecutionTime() > MaxEstimatedExecutionTime)
+                    continue;
+                if (m->IsAvailable())
+                    return true;
+            }
+            else
+            {
+                if (std::get<std::shared_ptr<Group>>(Members[i].Member)->IsAvailable(MaxEstimatedExecutionTime))
+                    return true;
+            }
+        }
+        for (auto& i : SecondaryQueue)
+        {
+            if (std::holds_alternative<std::shared_ptr<Module>>(Members[i].Member))
+            {
+                auto& m = std::get<std::shared_ptr<Module>>(Members[i].Member);
+                if (MaxEstimatedExecutionTime != 0 && m->PredictHigherExecutionTime() > MaxEstimatedExecutionTime)
+                    continue;
+                if (m->IsAvailable())
+                    return true;
+            }
+            else
+            {
+                if (std::get<std::shared_ptr<Group>>(Members[i].Member)->IsAvailable(MaxEstimatedExecutionTime))
+                    return true;
+            }
+        }
+        return false;
+    }
+
     void ParallelGroup::WaitForAvailability(double MaxEstimatedExecutionTime, double MaxWaitingTime)
     {
         std::chrono::time_point<std::chrono::steady_clock> start;
@@ -159,38 +201,8 @@ namespace LoopScheduler
         if (RunningThreadsCount == 0)
             return;
 
-        for (auto& i : MainQueue)
-        {
-            if (std::holds_alternative<std::shared_ptr<Module>>(Members[i].Member))
-            {
-                auto& m = std::get<std::shared_ptr<Module>>(Members[i].Member);
-                if (MaxEstimatedExecutionTime != 0 && m->PredictHigherExecutionTime() > MaxEstimatedExecutionTime)
-                    continue;
-                if (m->IsAvailable())
-                    return;
-            }
-            else
-            {
-                if (std::get<std::shared_ptr<Group>>(Members[i].Member)->IsAvailable(MaxEstimatedExecutionTime))
-                    return;
-            }
-        }
-        for (auto& i : SecondaryQueue)
-        {
-            if (std::holds_alternative<std::shared_ptr<Module>>(Members[i].Member))
-            {
-                auto& m = std::get<std::shared_ptr<Module>>(Members[i].Member);
-                if (MaxEstimatedExecutionTime != 0 && m->PredictHigherExecutionTime() > MaxEstimatedExecutionTime)
-                    continue;
-                if (m->IsAvailable())
-                    return;
-            }
-            else
-            {
-                if (std::get<std::shared_ptr<Group>>(Members[i].Member)->IsAvailable(MaxEstimatedExecutionTime))
-                    return;
-            }
-        }
+        if (IsAvailableNoLock(MaxEstimatedExecutionTime))
+            return;
 
         lock.unlock();
 

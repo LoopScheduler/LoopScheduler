@@ -30,6 +30,7 @@ namespace LoopScheduler
         ParallelGroup(std::vector<ParallelGroupMember>);
     protected:
         virtual bool RunNextModule(double MaxEstimatedExecutionTime = 0) override;
+        virtual bool IsAvailable(double MaxEstimatedExecutionTime = 0) override;
         virtual void WaitForAvailability(double MaxEstimatedExecutionTime = 0, double MaxWaitingTime = 0) override;
         virtual bool IsDone() override;
         virtual void StartNextIteration() override;
@@ -69,6 +70,10 @@ namespace LoopScheduler
         inline bool RunModule(std::shared_ptr<Module>&, std::unique_lock<std::shared_mutex>&);
         inline bool RunGroup(std::shared_ptr<Group>&, std::unique_lock<std::shared_mutex>&);
 
+        /// NO MUTEX LOCK
+        inline bool IsAvailableNoLock(const double& MaxEstimatedExecutionTime);
+        /// NO SUBGROUP CALL
+        /// NO MUTEX LOCK
         inline void StartNextIterationForThisGroup();
     };
 }
