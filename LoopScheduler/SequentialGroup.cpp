@@ -105,8 +105,11 @@ namespace LoopScheduler
 
         const auto predicate = [this, &MaxEstimatedExecutionTime, &MaxWaitingTime, &start] {
             std::shared_lock<std::shared_mutex> lock(MembersSharedMutex);
-            if (ShouldIncrementCurrentMemberIndex()
-                || ShouldRunNextModuleFromCurrentMemberIndex(MaxEstimatedExecutionTime)) // There is a next module to run.
+            if (ShouldIncrementCurrentMemberIndex())
+            {
+                return true;
+            }
+            if (ShouldRunNextModuleFromCurrentMemberIndex(MaxEstimatedExecutionTime)) // There is a next module to run.
             {
                 auto& member = std::get<std::shared_ptr<Module>>(Members[CurrentMemberIndex]);
                 lock.unlock();
