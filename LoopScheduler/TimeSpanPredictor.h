@@ -8,7 +8,7 @@ namespace LoopScheduler
     class TimeSpanPredictor
     {
     public:
-        virtual ~TimeSpanPredictor();
+        virtual ~TimeSpanPredictor() = default;
         /// @brief Reinitializes, forgetting the past observations.
         virtual void Initialize(double TimeSpan) = 0;
         /// @brief Reports a new timespan observation.
