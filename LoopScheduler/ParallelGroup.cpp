@@ -163,12 +163,15 @@ namespace LoopScheduler
         {
             if (std::holds_alternative<std::shared_ptr<Module>>(Members[i].Member))
             {
-                if (std::get<std::shared_ptr<Module>>(Members[i].Member)->IsAvailable())
+                auto& m = std::get<std::shared_ptr<Module>>(Members[i].Member);
+                if (MaxEstimatedExecutionTime != 0 && m->PredictHigherExecutionTime() > MaxEstimatedExecutionTime)
+                    continue;
+                if (m->IsAvailable())
                     return;
             }
             else
             {
-                if (std::get<std::shared_ptr<Group>>(Members[i].Member)->IsAvailable())
+                if (std::get<std::shared_ptr<Group>>(Members[i].Member)->IsAvailable(MaxEstimatedExecutionTime))
                     return;
             }
         }
@@ -176,12 +179,15 @@ namespace LoopScheduler
         {
             if (std::holds_alternative<std::shared_ptr<Module>>(Members[i].Member))
             {
-                if (std::get<std::shared_ptr<Module>>(Members[i].Member)->IsAvailable())
+                auto& m = std::get<std::shared_ptr<Module>>(Members[i].Member);
+                if (MaxEstimatedExecutionTime != 0 && m->PredictHigherExecutionTime() > MaxEstimatedExecutionTime)
+                    continue;
+                if (m->IsAvailable())
                     return;
             }
             else
             {
-                if (std::get<std::shared_ptr<Group>>(Members[i].Member)->IsAvailable())
+                if (std::get<std::shared_ptr<Group>>(Members[i].Member)->IsAvailable(MaxEstimatedExecutionTime))
                     return;
             }
         }
