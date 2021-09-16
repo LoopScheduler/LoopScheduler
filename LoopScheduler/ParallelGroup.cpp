@@ -16,23 +16,31 @@ namespace LoopScheduler
                 GroupMembers.push_back(std::get<std::shared_ptr<Group>>(member.Member));
     }
 
-    class IncrementGuardLockingOnDecrement
+    /// Increments the 2 numbers on construction without locking.
+    /// Decrements the 2 numbers on destruction with locking.
+    /// Increments the counter on destruction too.
+    class DoubleIncrementGuardLockingAndCountingOnDecrement
     {
     public:
-        IncrementGuardLockingOnDecrement(
-            int& num,
-            std::unique_lock<std::shared_mutex>& lock) : num(num), lock(lock)
+        DoubleIncrementGuardLockingAndCountingOnDecrement(
+            int& num1, int& num2, int& counter,
+            std::unique_lock<std::shared_mutex>& lock) : num1(num1), num2(num2), counter(counter), lock(lock)
         {
-            num++;
+            num1++;
+            num2++;
         }
-        ~IncrementGuardLockingOnDecrement()
+        ~DoubleIncrementGuardLockingAndCountingOnDecrement()
         {
             lock.lock();
-            num--;
+            num2--;
+            num1--;
+            counter++;
             lock.unlock();
         }
     private:
-        int& num;
+        int& num1;
+        int& num2;
+        int& counter;
         std::unique_lock<std::shared_mutex>& lock;
     };
 
@@ -105,7 +113,9 @@ namespace LoopScheduler
         {
             auto& runinfo = ModulesRunCountsAndPredictedStopTimes[m];
             {
-                IncrementGuardLockingOnDecrement increment_guard(runinfo.RunCount.value, lock);
+                DoubleIncrementGuardLockingAndCountingOnDecrement increment_guard(
+                    runinfo.RunCount.value, RunningThreadsCount, NotifyingCounter, lock
+                );
                 runinfo.StartTime = std::chrono::steady_clock::now();
                 runinfo.HigherPredictedTimeSpan = m->PredictHigherExecutionTime();
                 runinfo.HigherPredictedTimeSpan = m->PredictLowerExecutionTime();
@@ -125,7 +135,9 @@ namespace LoopScheduler
         auto& runcounts = GroupsRunCounts[g];
         bool success;
         {
-            IncrementGuardLockingOnDecrement increment_guard(runcounts.value, lock);
+            DoubleIncrementGuardLockingAndCountingOnDecrement increment_guard(
+                runcounts.value, RunningThreadsCount, NotifyingCounter, lock
+            );
             lock.unlock();
             success = g->RunNextModule();
         }
