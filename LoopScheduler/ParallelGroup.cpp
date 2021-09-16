@@ -56,9 +56,12 @@ namespace LoopScheduler
                 auto& g = std::get<std::shared_ptr<Group>>(member.Member);
                 if (RunGroup(g, lock))
                 {
-                    MainQueue.erase(i);
-                    if (member.CanRunMoreThanOncePreCycle)
-                        SecondaryQueue.push_back(*i);
+                    if (g->IsDone())
+                    {
+                        MainQueue.erase(i);
+                        if (member.CanRunMoreThanOncePreCycle)
+                            SecondaryQueue.push_back(*i);
+                    }
                     return true;
                 }
             }
