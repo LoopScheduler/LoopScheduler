@@ -247,12 +247,36 @@ namespace LoopScheduler
 
     double ParallelGroup::PredictHigherRemainingExecutionTime()
     {
-        // TODO
+        std::shared_lock<std::shared_mutex> lock(MembersSharedMutex);
+        double result = 0.000001;
+        auto now = std::chrono::steady_clock::now();
+        for (auto& item : ModulesRunCountsAndPredictedStopTimes)
+        {
+            std::chrono::duration<double> passed_time = now - item.second.StartTime;
+            result = std::max(result, item.second.HigherPredictedTimeSpan - passed_time.count());
+        }
+        for (auto& item : GroupsRunCounts)
+        {
+            result = std::max(result, item.first->PredictHigherRemainingExecutionTime());
+        }
+        return result;
     }
 
     double ParallelGroup::PredictLowerRemainingExecutionTime()
     {
-        // TODO
+        std::shared_lock<std::shared_mutex> lock(MembersSharedMutex);
+        double result = 0.000001;
+        auto now = std::chrono::steady_clock::now();
+        for (auto& item : ModulesRunCountsAndPredictedStopTimes)
+        {
+            std::chrono::duration<double> passed_time = now - item.second.StartTime;
+            result = std::max(result, item.second.LowerPredictedTimeSpan - passed_time.count());
+        }
+        for (auto& item : GroupsRunCounts)
+        {
+            result = std::max(result, item.first->PredictLowerRemainingExecutionTime());
+        }
+        return result;
     }
 
     ParallelGroup::integer::integer() : value(0) {}
