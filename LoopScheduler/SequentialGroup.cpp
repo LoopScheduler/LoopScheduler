@@ -261,7 +261,7 @@ namespace LoopScheduler
         }
         else
         {
-            // Double mutex lock can occur if there's a loop.
+            // Double mutex lock can occur if there's a group loop.
             if constexpr (Higher)
                 return std::max(
                     std::get<std::shared_ptr<Group>>(Members[CurrentMemberIndex])->PredictHigherRemainingExecutionTime(),
