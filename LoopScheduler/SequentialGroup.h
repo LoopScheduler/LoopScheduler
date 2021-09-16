@@ -24,6 +24,7 @@ namespace LoopScheduler
         SequentialGroup(std::vector<std::variant<std::shared_ptr<Group>, std::shared_ptr<Module>>>);
     protected:
         virtual bool RunNextModule(double MaxEstimatedExecutionTime = 0) override;
+        virtual bool IsAvailable(double MaxEstimatedExecutionTime = 0) override;
         virtual void WaitForAvailability(double MaxEstimatedExecutionTime = 0, double MaxWaitingTime = 0) override;
         virtual bool IsDone() override;
         virtual void StartNextIteration() override;

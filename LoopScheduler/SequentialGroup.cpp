@@ -80,6 +80,21 @@ namespace LoopScheduler
         return false;
     }
 
+    bool SequentialGroup::IsAvailable(double MaxEstimatedExecutionTime)
+    {
+        if (ShouldIncrementCurrentMemberIndex()
+            || ShouldRunNextModuleFromCurrentMemberIndex(MaxEstimatedExecutionTime))
+        {
+            return true;
+        }
+        if (double max_exec_time; ShouldTryRunNextGroupFromCurrentMemberIndex(MaxEstimatedExecutionTime, max_exec_time))
+        {
+            auto& member = std::get<std::shared_ptr<Group>>(Members[CurrentMemberIndex]);
+            return member->IsAvailable(max_exec_time);
+        }
+        return false;
+    }
+
     void SequentialGroup::WaitForAvailability(double MaxEstimatedExecutionTime, double MaxWaitingTime)
     {
         std::chrono::time_point<std::chrono::steady_clock> start;
