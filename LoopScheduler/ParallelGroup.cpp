@@ -248,6 +248,8 @@ namespace LoopScheduler
     double ParallelGroup::PredictHigherRemainingExecutionTime()
     {
         std::shared_lock<std::shared_mutex> lock(MembersSharedMutex);
+        if (RunningThreadsCount == 0)
+            return 0;
         double result = 0.000001;
         auto now = std::chrono::steady_clock::now();
         for (auto& item : ModulesRunCountsAndPredictedStopTimes)
@@ -265,6 +267,8 @@ namespace LoopScheduler
     double ParallelGroup::PredictLowerRemainingExecutionTime()
     {
         std::shared_lock<std::shared_mutex> lock(MembersSharedMutex);
+        if (RunningThreadsCount == 0)
+            return 0;
         double result = 0.000001;
         auto now = std::chrono::steady_clock::now();
         for (auto& item : ModulesRunCountsAndPredictedStopTimes)
