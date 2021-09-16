@@ -71,7 +71,7 @@ namespace LoopScheduler
         inline bool RunGroup(std::shared_ptr<Group>&, std::unique_lock<std::shared_mutex>&);
 
         /// NO MUTEX LOCK
-        inline bool IsAvailableNoLock(const double& MaxEstimatedExecutionTime);
+        inline bool IsAvailableNoLock(double MaxEstimatedExecutionTime);
         /// NO SUBGROUP CALL
         /// NO MUTEX LOCK
         inline void StartNextIterationForThisGroup();

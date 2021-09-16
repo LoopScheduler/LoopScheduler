@@ -152,7 +152,7 @@ namespace LoopScheduler
         std::shared_lock<std::shared_mutex> lock(MembersSharedMutex);
         return IsAvailableNoLock(MaxEstimatedExecutionTime);
     }
-    bool ParallelGroup::IsAvailableNoLock(const double& MaxEstimatedExecutionTime)
+    inline bool ParallelGroup::IsAvailableNoLock(double MaxEstimatedExecutionTime)
     {
         for (auto& i : MainQueue)
         {
