@@ -12,7 +12,7 @@ namespace LoopScheduler
         virtual ~Module();
 
         class RunningToken // TODO: Implement parallel run ability.
-        {                  // TODO: Another class to handle this and WaitForRunAvailability behavior injected using constructor?
+        {
             friend Module;
         public:
             ~RunningToken();
@@ -28,6 +28,8 @@ namespace LoopScheduler
         ///        Gets a running token to check whether it's possible to run and then run,
         ///        while reserving that run until the token is destructed or used.
         RunningToken GetRunningToken();
+        /// @brief Checks whether it's permitted to run the module.
+        bool IsAvailable();
         /// @brief Waits until it's permitted to run the module.
         ///        May give false positive (return when cannot run).
         void WaitForRunAvailability(double MaxWaitingTime = 0);
@@ -67,6 +69,13 @@ namespace LoopScheduler
         void Idle(double min_waiting_time);
         IdlingToken StartIdling(double max_waiting_time_after_stop, double total_max_waiting_time = 0);
     private:
+        /// @brief Cannot have 2 parents, only be able to set when parent is destructed.
+        ///        Check for loops using this.
+        ///
+        /// Note: With each module only having 1 parent,
+        /// it's reliable to wait for availability by waiting for the module to be done running.
+        /// Also having multiple children of the same module in a group is possible.
+        std::weak_ptr<Group> Parent;
         std::unique_ptr<TimeSpanPredictor> HigherExecutionTimePredictor;
         std::unique_ptr<TimeSpanPredictor> LowerExecutionTimePredictor;
         bool CanRunInParallel;

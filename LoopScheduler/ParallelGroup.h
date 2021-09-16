@@ -30,12 +30,17 @@ namespace LoopScheduler
         ParallelGroup(std::vector<ParallelGroupMember>);
     protected:
         virtual bool RunNextModule(double MaxEstimatedExecutionTime = 0) override;
-        virtual void WaitForNextEvent(double MaxEstimatedExecutionTime = 0, double MaxWaitingTime = 0) override;
+        virtual void WaitForAvailability(double MaxEstimatedExecutionTime = 0, double MaxWaitingTime = 0) override;
         virtual bool IsDone() override;
         virtual void StartNextIteration() override;
         virtual double PredictHigherRemainingExecutionTime() override;
         virtual double PredictLowerRemainingExecutionTime() override;
     private:
+        class integer // 0 by default
+        {
+            public: integer(); integer(int); operator int(); int value;
+        };
+
         /// @brief A shared mutex for class members.
         std::shared_mutex MembersSharedMutex;
 
@@ -47,13 +52,9 @@ namespace LoopScheduler
         ///
         /// Each thread should wait for a member and finally notify and remove itself from the map.
         /// New threads will be created only if they are terminated before (not contained in the map).
-        std::map<std::variant<std::shared_ptr<Group>, std::shared_ptr<Module>>,
-                 std::unique_ptr<std::thread>> WaitingAndNotifyingThreads;
-
-        class integer // 0 by default
-        {
-            public: integer(); integer(int); operator int(); int value;
-        };
+        std::map<std::variant<std::shared_ptr<Group>, std::shared_ptr<Module>>, integer> WaitingAndNotifyingThreads;
+        int RunningThreadsCount; // TODO: Count
+        int NotifyingCounter; // TODO: Count
 
         class ModuleRunCountAndPredictedStopTimes
         {

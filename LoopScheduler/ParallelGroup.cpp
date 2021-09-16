@@ -7,7 +7,7 @@
 namespace LoopScheduler
 {
     ParallelGroup::ParallelGroup(std::vector<ParallelGroupMember> Members)
-        : Members(Members)
+        : Members(Members), RunningThreadsCount(0), NotifyingCounter(0)
     {
         std::unique_lock<std::shared_mutex> lock(MembersSharedMutex);
         StartNextIterationForThisGroup();
@@ -135,9 +135,63 @@ namespace LoopScheduler
         return success;
     }
 
-    void ParallelGroup::WaitForNextEvent(double MaxEstimatedExecutionTime, double MaxWaitingTime)
+    void ParallelGroup::WaitForAvailability(double MaxEstimatedExecutionTime, double MaxWaitingTime)
     {
-        // TODO
+        std::chrono::time_point<std::chrono::steady_clock> start;
+        if (MaxWaitingTime != 0)
+            start = std::chrono::steady_clock::now();
+
+        std::shared_lock<std::shared_mutex> lock(MembersSharedMutex);
+        int start_notifying_counter = NotifyingCounter;
+
+        if (RunningThreadsCount == 0)
+            return;
+
+        for (auto& i : MainQueue)
+        {
+            if (std::holds_alternative<std::shared_ptr<Module>>(Members[i].Member))
+            {
+                if (std::get<std::shared_ptr<Module>>(Members[i].Member)->IsAvailable())
+                    return;
+            }
+            else
+            {
+                if (std::get<std::shared_ptr<Group>>(Members[i].Member)->IsAvailable())
+                    return;
+            }
+        }
+        for (auto& i : SecondaryQueue)
+        {
+            if (std::holds_alternative<std::shared_ptr<Module>>(Members[i].Member))
+            {
+                if (std::get<std::shared_ptr<Module>>(Members[i].Member)->IsAvailable())
+                    return;
+            }
+            else
+            {
+                if (std::get<std::shared_ptr<Group>>(Members[i].Member)->IsAvailable())
+                    return;
+            }
+        }
+
+        lock.unlock();
+
+        auto predicate = [this, start_notifying_counter] {
+            std::shared_lock<std::shared_mutex> lock(MembersSharedMutex);
+            return start_notifying_counter != NotifyingCounter;
+        };
+
+        std::unique_lock<std::mutex> cv_lock(NextEventConditionMutex);
+        if (MaxWaitingTime != 0)
+        {
+            auto stop = start + std::chrono::duration<double>(MaxWaitingTime);
+            std::chrono::duration<double> time = stop - std::chrono::steady_clock::now();
+            NextEventConditionVariable.wait_for(cv_lock, time, predicate);
+        }
+        else
+        {
+            NextEventConditionVariable.wait(cv_lock, predicate);
+        }
     }
 
     bool ParallelGroup::IsDone()

@@ -80,13 +80,13 @@ namespace LoopScheduler
         return false;
     }
 
-    void SequentialGroup::WaitForNextEvent(double MaxEstimatedExecutionTime, double MaxWaitingTime)
+    void SequentialGroup::WaitForAvailability(double MaxEstimatedExecutionTime, double MaxWaitingTime)
     {
-        std::unique_lock<std::mutex> lock(NextEventConditionMutex);
-
         std::chrono::time_point<std::chrono::steady_clock> start;
         if (MaxWaitingTime != 0)
             start = std::chrono::steady_clock::now();
+
+        std::unique_lock<std::mutex> lock(NextEventConditionMutex);
 
         const auto predicate = [this, &MaxEstimatedExecutionTime, &MaxWaitingTime, &start] {
             std::shared_lock<std::shared_mutex> lock(MembersSharedMutex);
@@ -114,14 +114,14 @@ namespace LoopScheduler
                 auto& member = std::get<std::shared_ptr<Group>>(Members[CurrentMemberIndex]);
                 lock.unlock();
                 if (MaxWaitingTime == 0)
-                    member->WaitForNextEvent(max_exec_time);
+                    member->WaitForAvailability(max_exec_time);
                 else
                 {
                     auto stop = start + std::chrono::duration<double>(MaxWaitingTime);
                     std::chrono::duration<double> time = stop - std::chrono::steady_clock::now();
                     double t = time.count();
                     if (t > 0)
-                        member->WaitForNextEvent(max_exec_time, t);
+                        member->WaitForAvailability(max_exec_time, t);
                 }
                 return true;
             }
