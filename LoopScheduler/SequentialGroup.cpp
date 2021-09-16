@@ -249,12 +249,12 @@ namespace LoopScheduler
             std::chrono::duration<double> duration = std::chrono::steady_clock::now() - LastModuleStartTime;
             if constexpr (Higher)
                 return std::max(
-                    duration.count() + LastModuleHigherPredictedTimeSpan,
+                    LastModuleHigherPredictedTimeSpan - duration.count(),
                     0.000001
                 );
             else
                 return std::max(
-                    duration.count() + LastModuleLowerPredictedTimeSpan,
+                    LastModuleLowerPredictedTimeSpan - duration.count(),
                     0.000001
                 );
             
