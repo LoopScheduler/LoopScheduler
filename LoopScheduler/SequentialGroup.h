@@ -34,6 +34,7 @@ namespace LoopScheduler
         std::shared_mutex MembersSharedMutex;
 
         std::vector<std::variant<std::shared_ptr<Group>, std::shared_ptr<Module>>> Members;
+        std::vector<std::shared_ptr<Group>> GroupMembers;
         /// @brief Can only be in range [-1, Members.size() - 1] (Only { -1 } if Members.size() = 0)
         int CurrentMemberIndex;
         int CurrentMemberRunsCount;

@@ -40,6 +40,7 @@ namespace LoopScheduler
         std::shared_mutex MembersSharedMutex;
 
         std::vector<ParallelGroupMember> Members;
+        std::vector<std::shared_ptr<Group>> GroupMembers;
         std::list<int> MainQueue;
         std::list<int> SecondaryQueue;
         /// @brief Used in WaitForNextEvent to notify itself.
@@ -71,5 +72,7 @@ namespace LoopScheduler
 
         inline bool RunModule(std::shared_ptr<Module>&, std::unique_lock<std::shared_mutex>&);
         inline bool RunGroup(std::shared_ptr<Group>&, std::unique_lock<std::shared_mutex>&);
+
+        inline void StartNextIterationForThisGroup();
     };
 }

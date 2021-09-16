@@ -9,7 +9,11 @@ namespace LoopScheduler
     ParallelGroup::ParallelGroup(std::vector<ParallelGroupMember> Members)
         : Members(Members)
     {
-        StartNextIteration();
+        std::unique_lock<std::shared_mutex> lock(MembersSharedMutex);
+        StartNextIterationForThisGroup();
+        for (auto& member : Members)
+            if (std::holds_alternative<std::shared_ptr<Group>>(member.Member))
+                GroupMembers.push_back(std::get<std::shared_ptr<Group>>(member.Member));
     }
 
     class IncrementGuardLockingOnDecrement
@@ -143,6 +147,14 @@ namespace LoopScheduler
 
     void ParallelGroup::StartNextIteration()
     {
+        std::unique_lock<std::shared_mutex> lock(MembersSharedMutex);
+        StartNextIterationForThisGroup();
+        for (auto& group_member : GroupMembers)
+            group_member->StartNextIteration();
+    }
+    inline void ParallelGroup::StartNextIterationForThisGroup()
+    {
+        // NO MUTEX LOCK
         MainQueue.clear();
         SecondaryQueue.clear();
         for (int i = 0; i < Members.size(); i++)
