@@ -154,7 +154,7 @@ namespace LoopScheduler
     }
     inline bool ParallelGroup::IsAvailableNoLock(double MaxEstimatedExecutionTime)
     {
-        for (auto& i : MainQueue)
+        for (auto i : MainQueue)
         {
             if (std::holds_alternative<std::shared_ptr<Module>>(Members[i].Member))
             {
@@ -170,7 +170,7 @@ namespace LoopScheduler
                     return true;
             }
         }
-        for (auto& i : SecondaryQueue)
+        for (auto i : SecondaryQueue)
         {
             if (std::holds_alternative<std::shared_ptr<Module>>(Members[i].Member))
             {
