@@ -194,15 +194,15 @@ namespace LoopScheduler
         };
 
         std::unique_lock<std::mutex> cv_lock(NextEventConditionMutex);
-        if (MaxWaitingTime != 0)
+        if (MaxWaitingTime == 0)
+        {
+            NextEventConditionVariable.wait(cv_lock, predicate);
+        }
+        else if (MaxWaitingTime > 0)
         {
             auto stop = start + std::chrono::duration<double>(MaxWaitingTime);
             std::chrono::duration<double> time = stop - std::chrono::steady_clock::now();
             NextEventConditionVariable.wait_for(cv_lock, time, predicate);
-        }
-        else
-        {
-            NextEventConditionVariable.wait(cv_lock, predicate);
         }
     }
 
