@@ -8,6 +8,8 @@ namespace LoopScheduler
 {
     class Module
     {
+        friend Loop; // To access Loop
+        friend Group; // To access Parent
     public:
         virtual ~Module();
 
@@ -75,7 +77,8 @@ namespace LoopScheduler
         /// Note: With each module only having 1 parent,
         /// it's reliable to wait for availability by waiting for the module to be done running.
         /// Also having multiple children of the same module in a group is possible.
-        std::weak_ptr<Group> Parent;
+        Group * Parent;
+        Loop * Loop;
         std::unique_ptr<TimeSpanPredictor> HigherExecutionTimePredictor;
         std::unique_ptr<TimeSpanPredictor> LowerExecutionTimePredictor;
         bool CanRunInParallel;

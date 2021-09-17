@@ -5,6 +5,7 @@
 #include <condition_variable>
 #include <memory>
 #include <mutex>
+#include <vector>
 
 namespace LoopScheduler
 {
@@ -24,6 +25,7 @@ namespace LoopScheduler
         bool IsRunning();
     private:
         std::shared_ptr<Group> Architecture;
+        std::vector<std::shared_ptr<Module>> Modules;
         std::mutex Mutex;
         std::condition_variable ConditionVariable;
         /// @brief Only set in Start()

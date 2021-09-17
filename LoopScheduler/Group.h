@@ -3,13 +3,20 @@
 #include "LoopScheduler.dec.h"
 
 #include <memory>
+#include <variant>
+#include <vector>
 
 namespace LoopScheduler
 {
     /// @brief Represents a group of modules or other groups scheduled in a certain way.
+    ///
+    /// Group members must only be specified on construction.
+    /// Derived classes have to call IntroduceMembers in the constructor.
+    /// Members list change should not be allowed.
     class Group
     {
     public:
+        Group();
         virtual ~Group();
         /// @brief Thread-safe method to run the next module.
         /// @return Whether a module was run.
@@ -32,15 +39,25 @@ namespace LoopScheduler
         ///
         /// Only zero when nothing is being executed in the group, otherwise, always non-zero positive.
         virtual double PredictLowerRemainingExecutionTime() = 0;
+        /// @brief Returns the group's parent group.
+        Group * GetParent();
+        /// @brief Returns the group's members.
+        std::vector<std::variant<std::weak_ptr<Group>, std::weak_ptr<Module>>> GetMembers();
     protected:
-        void CheckMemberGroupForLoops(Group*); // TODO: Implement loop detection
+        /// @brief Has to be called once in the derived class's constructor after initializing the members.
+        ///
+        /// Members list change should not be allowed.
+        void IntroduceMembers(std::vector<std::variant<std::shared_ptr<Group>, std::shared_ptr<Module>>>);
     private:
         /// @brief Cannot have 2 parents, only be able to set when parent is destructed.
-        ///        Check for loops using this.
+        ///        Could check for loops using this,
+        ///        but with constructor only Members initialization there shouldn't be a loop.
         ///
         /// Note: With each group only having 1 parent,
         /// it's reliable to predict remaining execution times using the child groups.
         /// Also having multiple children of the same group is possible.
-        std::weak_ptr<Group> Parent;
+        Group * Parent;
+        std::vector<std::variant<std::shared_ptr<Group>, std::shared_ptr<Module>>> Members;
+        std::vector<std::variant<std::weak_ptr<Group>, std::weak_ptr<Module>>> WeakMembers;
     };
 }

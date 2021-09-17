@@ -1,14 +1,60 @@
 #include "Loop.h"
 
+#include <map>
+#include <queue>
 #include <thread>
-#include <vector>
 
 #include "Group.h"
+#include "Module.h"
 
 namespace LoopScheduler
 {
+    class boolean // false by default
+    {
+        public: boolean(); boolean(bool); operator bool();
+        private: bool value;
+    };
+    boolean::boolean() : value(false) {}
+    boolean::boolean(bool value) : value(value) {}
+    boolean::operator bool() { return value; }
+
     Loop::Loop(std::shared_ptr<Group> Architecture) : Architecture(Architecture), _IsRunning(false), ShouldStop(false)
     {
+        std::map<std::weak_ptr<Group>, boolean> visited;
+        std::queue<std::weak_ptr<Group>> queue;
+        queue.push(std::weak_ptr<Group>(Architecture));
+        while (!queue.empty())
+        {
+            auto next = queue.front().lock();
+            queue.pop();
+            for (auto& member : next->GetMembers())
+            {
+                if (std::holds_alternative<std::weak_ptr<Group>>(member))
+                {
+                    auto& g = std::get<std::weak_ptr<Group>>(member);
+                    if (!visited[g])
+                    {
+                        queue.push(g);
+                        visited[g] = true;
+                    }
+                }
+                else
+                {
+                    Modules.push_back(std::get<std::weak_ptr<Module>>(member).lock());
+                }
+            }
+        }
+        for (auto& m : Modules)
+        {
+            if (m->Loop != nullptr)
+            {
+                Architecture = nullptr;
+                Modules.clear();
+                throw std::logic_error("A module cannot be in more than 1 loop.");
+            }
+        }
+        for (auto& m : Modules)
+            m->Loop = this;
     }
 
     Loop::~Loop()
@@ -19,6 +65,8 @@ namespace LoopScheduler
             guard.unlock();
             Stop();
         }
+        for (auto& m : Modules)
+            m->Loop = nullptr;
     }
 
     void Loop::Start(int threads_count)
