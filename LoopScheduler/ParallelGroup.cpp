@@ -9,7 +9,6 @@ namespace LoopScheduler
     ParallelGroup::ParallelGroup(std::vector<ParallelGroupMember> Members)
         : Members(Members), RunningThreadsCount(0), NotifyingCounter(0)
     {
-        std::unique_lock<std::shared_mutex> lock(MembersSharedMutex);
         StartNextIterationForThisGroup();
         for (auto& member : Members)
             if (std::holds_alternative<std::shared_ptr<Group>>(member.Member))

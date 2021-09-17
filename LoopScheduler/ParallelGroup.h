@@ -37,11 +37,6 @@ namespace LoopScheduler
         virtual double PredictHigherRemainingExecutionTime() override;
         virtual double PredictLowerRemainingExecutionTime() override;
     private:
-        class integer // 0 by default
-        {
-            public: integer(); integer(int); operator int(); int value;
-        };
-
         /// @brief A shared mutex for class members.
         std::shared_mutex MembersSharedMutex;
 
@@ -51,6 +46,11 @@ namespace LoopScheduler
         std::list<int> SecondaryQueue;
         int RunningThreadsCount;
         int NotifyingCounter;
+
+        class integer // 0 by default
+        {
+            public: integer(); integer(int); operator int(); int value;
+        };
 
         class ModuleRunCountAndPredictedStopTimes
         {

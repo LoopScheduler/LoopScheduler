@@ -10,7 +10,6 @@ namespace LoopScheduler
             std::vector<std::variant<std::shared_ptr<Group>, std::shared_ptr<Module>>> Members
         ) : Members(Members), CurrentMemberIndex(-1), CurrentMemberRunsCount(0), RunningThreadsCount(0)
     {
-        std::unique_lock<std::shared_mutex> lock(MembersSharedMutex);
         for (auto& member : Members)
             if (std::holds_alternative<std::shared_ptr<Group>>(member))
                 GroupMembers.push_back(std::get<std::shared_ptr<Group>>(member));
