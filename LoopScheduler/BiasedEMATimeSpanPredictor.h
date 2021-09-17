@@ -8,7 +8,7 @@ namespace LoopScheduler
     class BiasedEMATimeSpanPredictor final : public TimeSpanPredictor
     {
     public:
-        BiasedEMATimeSpanPredictor(double InitialValue, double IncrementAlpha = 0.2, double DecrementAlpha = 0.05);
+        BiasedEMATimeSpanPredictor(double InitialValue, double IncrementAlpha, double DecrementAlpha);
         virtual void Initialize(double TimeSpan) override;
         virtual void ReportObservation(double TimeSpan) override;
         virtual double Predict() override;
