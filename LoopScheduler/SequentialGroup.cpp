@@ -17,6 +17,9 @@ namespace LoopScheduler
 
     class IncrementGuardLockingOnDecrement
     {
+    private:
+        int& num;
+        std::unique_lock<std::shared_mutex>& lock;
     public:
         IncrementGuardLockingOnDecrement(int& num, std::unique_lock<std::shared_mutex>& lock) : num(num), lock(lock)
         {
@@ -28,9 +31,6 @@ namespace LoopScheduler
             num--;
             lock.unlock();
         }
-    private:
-        int& num;
-        std::unique_lock<std::shared_mutex>& lock;
     };
 
     bool SequentialGroup::RunNextModule(double MaxEstimatedExecutionTime)

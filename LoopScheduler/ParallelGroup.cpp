@@ -20,6 +20,11 @@ namespace LoopScheduler
     /// Increments the counter on destruction too.
     class DoubleIncrementGuardLockingAndCountingOnDecrement
     {
+    private:
+        int& num1;
+        int& num2;
+        int& counter;
+        std::unique_lock<std::shared_mutex>& lock;
     public:
         DoubleIncrementGuardLockingAndCountingOnDecrement(
             int& num1, int& num2, int& counter,
@@ -36,11 +41,6 @@ namespace LoopScheduler
             counter++;
             lock.unlock();
         }
-    private:
-        int& num1;
-        int& num2;
-        int& counter;
-        std::unique_lock<std::shared_mutex>& lock;
     };
 
     bool ParallelGroup::RunNextModule(double MaxEstimatedExecutionTime)
@@ -205,7 +205,7 @@ namespace LoopScheduler
 
         lock.unlock();
 
-        auto predicate = [this, start_notifying_counter] {
+        const auto predicate = [this, start_notifying_counter] {
             std::shared_lock<std::shared_mutex> lock(MembersSharedMutex);
             return start_notifying_counter != NotifyingCounter;
         };
