@@ -181,4 +181,9 @@ namespace LoopScheduler
     {
         // TODO
     }
+
+    Loop * Module::GetLoop()
+    {
+        return Loop;
+    }
 }

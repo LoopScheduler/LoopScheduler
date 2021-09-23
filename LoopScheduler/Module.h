@@ -111,6 +111,8 @@ namespace LoopScheduler
         /// @param TotalMaxWaitingTime Maximum time to wait in seconds.
         ///                            If 0 (default), it will wait untill IdlingToken.Stop() is called.
         IdlingToken StartIdling(double MaxWaitingTimeAfterStop, double TotalMaxWaitingTime = 0);
+
+        Loop * GetLoop();
     private:
         const bool CanRunInParallel;
 
