@@ -3,6 +3,7 @@
 #include "LoopScheduler.dec.h"
 
 #include <memory>
+#include <shared_mutex>
 #include <variant>
 #include <vector>
 
@@ -49,6 +50,7 @@ namespace LoopScheduler
         /// Members list change should not be allowed.
         void IntroduceMembers(std::vector<std::variant<std::shared_ptr<Group>, std::shared_ptr<Module>>>);
     private:
+        std::shared_mutex SharedMutex;
         /// @brief Cannot have 2 parents, only be able to set when parent is destructed.
         ///        Could check for loops using this,
         ///        but with constructor only Members initialization there shouldn't be a loop.

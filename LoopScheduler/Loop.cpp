@@ -1,5 +1,6 @@
 #include "Loop.h"
 
+#include <list>
 #include <map>
 #include <queue>
 #include <thread>
@@ -44,17 +45,30 @@ namespace LoopScheduler
                 }
             }
         }
+        bool failed = false;
+        std::list<std::shared_ptr<Module>> visited_modules;
         for (auto& m : Modules)
         {
-            if (m->Loop != nullptr)
+            std::unique_lock<std::shared_mutex> lock(m->SharedMutex);
+            if (m->Loop != nullptr && m->Loop != this)
             {
-                Architecture = nullptr;
-                Modules.clear();
-                throw std::logic_error("A module cannot be in more than 1 loop.");
+                failed = true;
+                break;
             }
-        }
-        for (auto& m : Modules)
             m->Loop = this;
+        }
+        if (failed)
+        {
+            // Revert
+            for (auto& m : visited_modules)
+            {
+                std::unique_lock<std::shared_mutex> lock(m->SharedMutex);
+                m->Loop = nullptr;
+            }
+            Architecture = nullptr;
+            Modules.clear();
+            throw std::logic_error("A module cannot be in more than 1 loop.");
+        }
     }
 
     Loop::~Loop()
@@ -66,7 +80,10 @@ namespace LoopScheduler
             Stop();
         }
         for (auto& m : Modules)
+        {
+            std::unique_lock<std::shared_mutex> lock(m->SharedMutex);
             m->Loop = nullptr;
+        }
     }
 
     void Loop::Start(int threads_count)

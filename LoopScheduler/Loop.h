@@ -25,6 +25,7 @@ namespace LoopScheduler
         bool IsRunning();
     private:
         std::shared_ptr<Group> Architecture;
+        /// @brief May contain duplicates.
         std::vector<std::shared_ptr<Module>> Modules;
         std::mutex Mutex;
         std::condition_variable ConditionVariable;

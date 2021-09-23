@@ -71,13 +71,14 @@ namespace LoopScheduler
         void Idle(double min_waiting_time);
         IdlingToken StartIdling(double max_waiting_time_after_stop, double total_max_waiting_time = 0);
     private:
+        std::shared_mutex SharedMutex;
         /// @brief Cannot have 2 parents, only be able to set when parent is destructed.
-        ///        Check for loops using this.
         ///
         /// Note: With each module only having 1 parent,
         /// it's reliable to wait for availability by waiting for the module to be done running.
         /// Also having multiple children of the same module in a group is possible.
         Group * Parent;
+        /// @brief Cannot be in 2 loops.
         Loop * Loop;
         std::unique_ptr<TimeSpanPredictor> HigherExecutionTimePredictor;
         std::unique_ptr<TimeSpanPredictor> LowerExecutionTimePredictor;
