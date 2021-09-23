@@ -86,7 +86,7 @@ namespace LoopScheduler
         }
     }
 
-    void Loop::Start(int threads_count)
+    void Loop::Run(int threads_count)
     {
         if (threads_count < 1)
             threads_count = std::thread::hardware_concurrency();
@@ -95,7 +95,7 @@ namespace LoopScheduler
         if (_IsRunning)
         {
             guard.unlock();
-            throw std::logic_error("Cannot start twice.");
+            throw std::logic_error("Cannot start running the loop twice.");
         }
         else
         {
