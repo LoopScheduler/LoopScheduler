@@ -107,9 +107,9 @@ namespace LoopScheduler
         ///
         /// Calling this twice will give a dummy IdlingToken the second time.
         ///
-        /// @param MaxWaitingTimeAfterStop Maximum time to wait in seconds calling IdlingToken.Stop().
+        /// @param MaxWaitingTimeAfterStop Maximum time to wait in seconds when calling the returned token's Stop().
         /// @param TotalMaxWaitingTime Maximum time to wait in seconds.
-        ///                            If 0 (default), it will wait untill IdlingToken.Stop() is called.
+        ///                            If 0 (default), it will wait until the returned token's Stop() is called.
         IdlingToken StartIdling(double MaxWaitingTimeAfterStop, double TotalMaxWaitingTime = 0);
 
         Loop * GetLoop();
