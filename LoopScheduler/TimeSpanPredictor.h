@@ -14,6 +14,8 @@ namespace LoopScheduler
         /// @brief Reports a new timespan observation.
         virtual void ReportObservation(double TimeSpan) = 0;
         /// @brief Returns the predicted timespan.
+        ///
+        /// This should not change the predictor's state (or modify member variables).
         virtual double Predict() = 0;
     };
 }
