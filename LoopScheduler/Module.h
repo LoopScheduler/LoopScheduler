@@ -37,10 +37,14 @@ namespace LoopScheduler
         virtual ~Module() = default;
 
         /// @brief Not thread-safe, use in a single thread.
-        class RunningToken
+        class RunningToken final
         {
             friend Module;
         public:
+            RunningToken(RunningToken&) = delete;
+            RunningToken(RunningToken&&);
+            RunningToken& operator=(RunningToken&) = delete;
+            RunningToken& operator=(RunningToken&&);
             ~RunningToken();
             /// @brief Whether running is permitted.
             ///
@@ -86,30 +90,39 @@ namespace LoopScheduler
         /// @brief To handle an unknown exception
         virtual void HandleException(std::exception_ptr e_ptr);
 
-        class IdlingToken
+        class IdlingToken final
         {
             friend Module;
         public:
+            IdlingToken(IdlingToken&) = delete;
+            IdlingToken(IdlingToken&&);
+            IdlingToken& operator=(IdlingToken&) = delete;
+            IdlingToken& operator=(IdlingToken&&);
             ~IdlingToken();
             /// @brief Stops idling. Only works once.
             ///        It's automatically done if the object is destructed.
             void Stop();
         private:
-            IdlingToken(Module * Creator);
-            Module * Creator;
+            IdlingToken();
+            std::mutex * MutexPtr;
+            bool * ShouldStopPtr;
+            /// @brief Should not be nullptr by the time any member function is called.
+            std::thread * ThreadPtr;
         };
 
         /// @brief To yield for other modules to possibly run meanwhile.
-        ///        Recommended over StartIdling.
+        ///        Recommended over StartIdling as it's faster and simpler.
         /// @param MinWaitingTime Minimum time to wait in seconds. Probably won't take much longer.
         void Idle(double MinWaitingTime);
         /// @brief To yield for other modules to possibly run meanwhile, in another thread.
         ///
-        /// Calling this twice will give a dummy IdlingToken the second time.
+        /// Do not call this a second time before stopping or destructing the first one's token.
+        /// Do not call Idle after calling this, and before stopping or destructing the token.
         ///
-        /// @param MaxWaitingTimeAfterStop Maximum time to wait in seconds when calling the returned token's Stop().
-        /// @param TotalMaxWaitingTime Maximum time to wait in seconds.
-        ///                            If 0 (default), it will wait until the returned token's Stop() is called.
+        /// @param MaxWaitingTimeAfterStop Approximate maximum time to wait in seconds when calling the returned token's Stop().
+        /// @param TotalMaxWaitingTime Approximate total maximum time to wait in seconds.
+        ///                            If 0 (default), it will wait until the returned token's Stop() is called,
+        ///                            or until the token is destructed.
         IdlingToken StartIdling(double MaxWaitingTimeAfterStop, double TotalMaxWaitingTime = 0);
 
         Loop * GetLoop();
@@ -135,7 +148,5 @@ namespace LoopScheduler
         std::mutex AvailabilityConditionMutex;
         /// @brief Notified when _IsAvailable is set to true.
         std::condition_variable AvailabilityConditionVariable;
-
-        bool IsIdling; // To detect StartIdling being called more than once
     };
 }

@@ -1,9 +1,12 @@
 #include "Module.h"
 
+#include <algorithm>
 #include <chrono>
 #include <utility>
 
 #include "BiasedEMATimeSpanPredictor.h"
+#include "Loop.h"
+#include "Group.h"
 
 namespace LoopScheduler
 {
@@ -11,7 +14,7 @@ namespace LoopScheduler
             bool CanRunInParallel,
             std::unique_ptr<TimeSpanPredictor> HigherExecutionTimePredictor,
             std::unique_ptr<TimeSpanPredictor> LowerExecutionTimePredictor
-        ) : CanRunInParallel(CanRunInParallel), Parent(nullptr), Loop(nullptr), _IsAvailable(true), IsIdling(false)
+        ) : CanRunInParallel(CanRunInParallel), Parent(nullptr), Loop(nullptr), _IsAvailable(true)
     {
         if (HigherExecutionTimePredictor == nullptr)
             HigherExecutionTimePredictor = std::unique_ptr<BiasedEMATimeSpanPredictor>(new BiasedEMATimeSpanPredictor(0, 0.2, 0.05));
@@ -38,7 +41,7 @@ namespace LoopScheduler
         }
     };
 
-    Module::RunningToken::RunningToken(Module * Creator)
+    Module::RunningToken::RunningToken(Module * Creator) : Creator(Creator)
     {
         if (Creator->CanRunInParallel)
         {
@@ -58,8 +61,21 @@ namespace LoopScheduler
             }
         }
     }
+    Module::RunningToken::RunningToken(RunningToken&& op)
+    {
+        Creator = std::exchange(op.Creator, nullptr);
+        _CanRun = std::exchange(op._CanRun, false);
+    }
+    Module::RunningToken& Module::RunningToken::operator=(RunningToken&& op)
+    {
+        Creator = std::exchange(op.Creator, nullptr);
+        _CanRun = std::exchange(op._CanRun, false);
+        return *this;
+    }
     Module::RunningToken::~RunningToken()
     {
+        if (Creator == nullptr)
+            return;
         if (!Creator->CanRunInParallel && _CanRun)
         {
             std::unique_lock<std::shared_mutex> lock(Creator->SharedMutex);
@@ -70,10 +86,14 @@ namespace LoopScheduler
     }
     bool Module::RunningToken::CanRun()
     {
+        if (Creator == nullptr)
+            return;
         _CanRun;
     }
     void Module::RunningToken::Run()
     {
+        if (Creator == nullptr)
+            return;
         if (_CanRun)
         {
             _CanRun = false;
@@ -159,27 +179,97 @@ namespace LoopScheduler
     void Module::HandleException(const std::exception& e) {}
     void Module::HandleException(std::exception_ptr e_ptr) {}
 
-    Module::IdlingToken::IdlingToken(Module * Creator)
+    Module::IdlingToken::IdlingToken() : MutexPtr(new std::mutex), ShouldStopPtr(new bool(false)), ThreadPtr(nullptr)
     {
-        // TODO
+    }
+    Module::IdlingToken::IdlingToken(IdlingToken&& op)
+    {
+        MutexPtr = std::exchange(op.MutexPtr, nullptr);
+        ShouldStopPtr = std::exchange(op.ShouldStopPtr, nullptr);
+        ThreadPtr = std::exchange(op.ThreadPtr, nullptr);
+    }
+    Module::IdlingToken& Module::IdlingToken::operator=(IdlingToken&& op)
+    {
+        MutexPtr = std::exchange(op.MutexPtr, nullptr);
+        ShouldStopPtr = std::exchange(op.ShouldStopPtr, nullptr);
+        ThreadPtr = std::exchange(op.ThreadPtr, nullptr);
+        return *this;
     }
     Module::IdlingToken::~IdlingToken()
     {
-        // TODO
+        if (MutexPtr == nullptr) // Has moved
+            return;
+        std::unique_lock<std::mutex> lock(*MutexPtr);
+        (*ShouldStopPtr) = true;
+        lock.unlock();
+        if (ThreadPtr->joinable())
+            ThreadPtr->join();
+        delete MutexPtr;
+        delete ShouldStopPtr;
+        delete ThreadPtr;
     }
     void Module::IdlingToken::Stop()
     {
-        // TODO
+        if (MutexPtr == nullptr) // Has moved
+            return;
+        std::unique_lock<std::mutex> lock(*MutexPtr);
+        (*ShouldStopPtr) = true;
+        lock.unlock();
+        if (ThreadPtr->joinable())
+            ThreadPtr->join();
     }
 
     void Module::Idle(double MinWaitingTime)
     {
-        // TODO
+        auto start = std::chrono::steady_clock::now();
+        double remaining_time = MinWaitingTime;
+        while (remaining_time > 0)
+        {
+            if (!Loop->Architecture->RunNextModule(remaining_time))
+                Loop->Architecture->WaitForAvailability(remaining_time, remaining_time);
+            remaining_time = MinWaitingTime - (
+                    (std::chrono::duration<double>)(std::chrono::steady_clock::now() - start)
+                ).count();
+        }
     }
 
     Module::IdlingToken Module::StartIdling(double MaxWaitingTimeAfterStop, double TotalMaxWaitingTime)
     {
-        // TODO
+        IdlingToken token;
+        auto MutexPtr = token.MutexPtr;
+        auto ShouldStopPtr = token.ShouldStopPtr;
+        token.ThreadPtr = new std::thread([this, MutexPtr, ShouldStopPtr, MaxWaitingTimeAfterStop, TotalMaxWaitingTime] {
+            if (TotalMaxWaitingTime == 0)
+            {
+                while (true)
+                {
+                    if (!Loop->Architecture->RunNextModule(MaxWaitingTimeAfterStop))
+                        Loop->Architecture->WaitForAvailability(MaxWaitingTimeAfterStop, MaxWaitingTimeAfterStop * 0.25);
+                    std::unique_lock<std::mutex> lock(*MutexPtr);
+                    if (*ShouldStopPtr)
+                        return;
+                }
+            }
+            else
+            {
+                auto start = std::chrono::steady_clock::now();
+                double remaining_time = TotalMaxWaitingTime;
+                while (remaining_time > 0)
+                {
+                    double time = std::min(remaining_time, MaxWaitingTimeAfterStop);
+                    if (!Loop->Architecture->RunNextModule(time))
+                        Loop->Architecture->WaitForAvailability(time, time * 0.25);
+                    std::unique_lock<std::mutex> lock(*MutexPtr);
+                    if (*ShouldStopPtr)
+                        return;
+                    lock.unlock();
+                    remaining_time = TotalMaxWaitingTime - (
+                            (std::chrono::duration<double>)(std::chrono::steady_clock::now() - start)
+                        ).count();
+                }
+            }
+        });
+        return token;
     }
 
     Loop * Module::GetLoop()

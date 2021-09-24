@@ -12,6 +12,7 @@ namespace LoopScheduler
     /// @brief Runs a multi-threaded loop using an architecture defined by Group objects.
     class Loop final
     {
+        friend Module; // To access the Architecture when idling.
     public:
         Loop(std::shared_ptr<Group> Architecture);
         ~Loop();

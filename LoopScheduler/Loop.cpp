@@ -1,5 +1,6 @@
 #include "Loop.h"
 
+#include <exception>
 #include <list>
 #include <map>
 #include <queue>

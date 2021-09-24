@@ -1,5 +1,6 @@
 #include "Group.h"
 
+#include <exception>
 #include <list>
 #include <map>
 #include <mutex>
