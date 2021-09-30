@@ -106,7 +106,7 @@ int main()
     std::chrono::duration<double> threads_duration = stop - start;
 
     std::cout << "Threads' time: " << threads_duration.count() << '\n';
-    std::cout << "Efficiency: " << loop_scheduler_duration.count() / threads_duration.count() << '\n';
+    std::cout << "Efficiency: " << threads_duration.count() / loop_scheduler_duration.count() << '\n';
 
     return 0;
 }
