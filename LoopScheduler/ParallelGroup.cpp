@@ -9,6 +9,11 @@ namespace LoopScheduler
     ParallelGroup::ParallelGroup(std::vector<ParallelGroupMember> Members)
         : Members(Members), RunningThreadsCount(0), NotifyingCounter(0)
     {
+        std::vector<std::variant<std::shared_ptr<Group>, std::shared_ptr<Module>>> simple_members;
+        for (auto& member : Members)
+            simple_members.push_back(member.Member);
+        IntroduceMembers(simple_members);
+
         StartNextIterationForThisGroup();
         for (auto& member : Members)
             if (std::holds_alternative<std::shared_ptr<Group>>(member.Member))
