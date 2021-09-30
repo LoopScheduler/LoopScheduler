@@ -22,6 +22,10 @@ namespace LoopScheduler
         void Run(int threads_count = 0);
         /// @brief Thread-safe method to stop the loop. Won't do anything if the loop isn't running.
         void Stop();
+        /// @brief Thread-safe method to stop the loop and wait for it. Won't do anything if the loop isn't running.
+        ///
+        /// Don't call this from a Module or anything run by the architecture inside the loop.
+        void StopAndWait();
         /// @brief Thread-safe method to check whether the loop is running.
         bool IsRunning();
     private:

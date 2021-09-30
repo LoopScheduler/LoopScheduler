@@ -98,11 +98,9 @@ namespace LoopScheduler
             guard.unlock();
             throw std::logic_error("Cannot start running the loop twice.");
         }
-        else
-        {
-            _IsRunning = true;
-            guard.unlock();
-        }
+        _IsRunning = true;
+        ShouldStop = false;
+        guard.unlock();
 
         std::vector<std::thread> threads;
         for (int i = 0; i < threads_count; i++)
@@ -146,10 +144,16 @@ namespace LoopScheduler
     {
         std::unique_lock<std::mutex> guard(Mutex);
         if (_IsRunning)
+            ShouldStop = true;
+    }
+
+    void Loop::StopAndWait()
+    {
+        std::unique_lock<std::mutex> guard(Mutex);
+        if (_IsRunning)
         {
             ShouldStop = true;
             ConditionVariable.wait(guard, [this] { return !_IsRunning; });
-            guard.unlock();
         }
     }
 
