@@ -33,7 +33,7 @@ void WorkingModule::OnRun()
         auto now = std::chrono::steady_clock::now();
         while (((std::chrono::duration<double>)(now - start)).count() < WorkTime)
         {
-            auto now = std::chrono::steady_clock::now();
+            now = std::chrono::steady_clock::now();
         }
     }
 }
@@ -90,7 +90,7 @@ int main()
                         auto now = std::chrono::steady_clock::now();
                         while (((std::chrono::duration<double>)(now - start)).count() < WorkTime)
                         {
-                            auto now = std::chrono::steady_clock::now();
+                            now = std::chrono::steady_clock::now();
                         }
                     }
                 }
