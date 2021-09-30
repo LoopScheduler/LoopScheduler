@@ -7,6 +7,7 @@
 #include <memory>
 #include <mutex>
 #include <shared_mutex>
+#include <thread>
 
 namespace LoopScheduler
 {
@@ -138,7 +139,7 @@ namespace LoopScheduler
         /// Also having multiple children of the same module in a group is possible.
         Group * Parent;
         /// @brief Cannot be in 2 loops.
-        Loop * Loop;
+        Loop * LoopPtr;
 
         std::unique_ptr<TimeSpanPredictor> HigherExecutionTimePredictor;
         std::unique_ptr<TimeSpanPredictor> LowerExecutionTimePredictor;

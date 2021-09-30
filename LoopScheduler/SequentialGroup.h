@@ -76,6 +76,4 @@ namespace LoopScheduler
         template <bool Higher>
         inline double PredictRemainingExecutionTimeNoLock();
     };
-    template<> double SequentialGroup::PredictRemainingExecutionTimeNoLock<true>();
-    template<> double SequentialGroup::PredictRemainingExecutionTimeNoLock<false>();
 }

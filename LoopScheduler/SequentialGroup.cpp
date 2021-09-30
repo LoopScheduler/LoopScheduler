@@ -143,7 +143,7 @@ namespace LoopScheduler
                 return true;
             }
             if ((CurrentMemberIndex == Members.size() - 1)
-                && (RunningThreadsCount == 0)); // (And no next module to run) => IsDone=true.
+                && (RunningThreadsCount == 0)) // (And no next module to run) => IsDone=true.
             {
                 return true;
             }

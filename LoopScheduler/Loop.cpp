@@ -22,18 +22,18 @@ namespace LoopScheduler
 
     Loop::Loop(std::shared_ptr<Group> Architecture) : Architecture(Architecture), _IsRunning(false), ShouldStop(false)
     {
-        std::map<std::weak_ptr<Group>, boolean> visited;
-        std::queue<std::weak_ptr<Group>> queue;
-        queue.push(std::weak_ptr<Group>(Architecture));
+        std::map<std::shared_ptr<Group>, boolean> visited;
+        std::queue<std::shared_ptr<Group>> queue;
+        queue.push(Architecture);
         while (!queue.empty())
         {
-            auto next = queue.front().lock();
+            auto next = queue.front();
             queue.pop();
             for (auto& member : next->GetMembers())
             {
                 if (std::holds_alternative<std::weak_ptr<Group>>(member))
                 {
-                    auto& g = std::get<std::weak_ptr<Group>>(member);
+                    auto g = std::get<std::weak_ptr<Group>>(member).lock();
                     if (!visited[g])
                     {
                         queue.push(g);
@@ -51,12 +51,12 @@ namespace LoopScheduler
         for (auto& m : Modules)
         {
             std::unique_lock<std::shared_mutex> lock(m->SharedMutex);
-            if (m->Loop != nullptr && m->Loop != this)
+            if (m->LoopPtr != nullptr && m->LoopPtr != this)
             {
                 failed = true;
                 break;
             }
-            m->Loop = this;
+            m->LoopPtr = this;
         }
         if (failed)
         {
@@ -64,7 +64,7 @@ namespace LoopScheduler
             for (auto& m : visited_modules)
             {
                 std::unique_lock<std::shared_mutex> lock(m->SharedMutex);
-                m->Loop = nullptr;
+                m->LoopPtr = nullptr;
             }
             Architecture = nullptr;
             Modules.clear();
@@ -83,7 +83,7 @@ namespace LoopScheduler
         for (auto& m : Modules)
         {
             std::unique_lock<std::shared_mutex> lock(m->SharedMutex);
-            m->Loop = nullptr;
+            m->LoopPtr = nullptr;
         }
     }
 
@@ -108,7 +108,7 @@ namespace LoopScheduler
         for (int i = 0; i < threads_count; i++)
         {
             threads.push_back(
-                std::thread([i, this]
+                std::thread([this]
                 {
                     std::unique_lock<std::mutex> guard(Mutex);
                     guard.unlock();
