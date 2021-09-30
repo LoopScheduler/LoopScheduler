@@ -126,7 +126,6 @@ namespace LoopScheduler
                 ModulesRunCountsAndPredictedStopTimes.erase(m);
             return true;
         }
-        lock.lock();
         return false;
     }
     inline bool ParallelGroup::RunGroup(std::shared_ptr<Group>& g, std::unique_lock<std::shared_mutex>& lock)
