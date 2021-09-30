@@ -59,25 +59,26 @@ namespace LoopScheduler
                 auto& m = std::get<std::shared_ptr<Module>>(member.Member);
                 if (MaxEstimatedExecutionTime != 0 && m->PredictHigherExecutionTime() > MaxEstimatedExecutionTime)
                     continue;
-                if (RunModule(m, lock))
+                if (RunModule(m, lock, MainQueue, SecondaryQueue, i, member.RunSharesAfterFirstRun))
                 {
-                    MainQueue.erase(i);
-                    if (member.CanRunMoreThanOncePreCycle)
-                        SecondaryQueue.push_back(*i);
+                    // Done in RunModule before running:
+                    //MainQueue.erase(i);
+                    //if (member.CanRunMoreThanOncePerCycle)
+                        //SecondaryQueue.push_back(*i);
                     return true;
                 }
             }
             else
             {
                 auto& g = std::get<std::shared_ptr<Group>>(member.Member);
-                if (RunGroup(g, lock))
+                if (g->IsDone())
                 {
-                    if (g->IsDone())
-                    {
-                        MainQueue.erase(i);
-                        if (member.CanRunMoreThanOncePreCycle)
-                            SecondaryQueue.push_back(*i);
-                    }
+                    MainQueue.erase(i);
+                    for (int j = 0; j < member.RunSharesAfterFirstRun; j++)
+                        SecondaryQueue.push_back(*i);
+                }
+                else if (RunGroup(g, lock))
+                {
                     return true;
                 }
             }
@@ -90,31 +91,40 @@ namespace LoopScheduler
                 auto& m = std::get<std::shared_ptr<Module>>(member.Member);
                 if (MaxEstimatedExecutionTime != 0 && m->PredictHigherExecutionTime() > MaxEstimatedExecutionTime)
                     continue;
-                if (RunModule(m, lock))
+                if (RunModule(m, lock, SecondaryQueue, SecondaryQueue, i, 1))
                 {
-                    SecondaryQueue.erase(i);
-                    SecondaryQueue.push_back(*i);
+                    // Done in RunModule before running:
+                    //SecondaryQueue.erase(i);
+                    //SecondaryQueue.push_back(*i);
                     return true;
                 }
             }
             else
             {
                 auto& g = std::get<std::shared_ptr<Group>>(member.Member);
+                SecondaryQueue.erase(i);
+                SecondaryQueue.push_back(*i);
                 if (RunGroup(g, lock))
                 {
-                    SecondaryQueue.erase(i);
-                    SecondaryQueue.push_back(*i);
                     return true;
                 }
             }
         }
         return false;
     }
-    inline bool ParallelGroup::RunModule(std::shared_ptr<Module>& m, std::unique_lock<std::shared_mutex>& lock)
+    inline bool ParallelGroup::RunModule(std::shared_ptr<Module>& m,
+                                         std::unique_lock<std::shared_mutex>& lock,
+                                         std::list<int>& from_list,
+                                         std::list<int>& to_list,
+                                         std::list<int>::iterator& item_to_move,
+                                         int move_to_to_list_count)
     {
         auto token = m->GetRunningToken();
         if (token.CanRun())
         {
+            from_list.erase(item_to_move);
+            for (int j = 0; j < move_to_to_list_count; j++)
+                to_list.push_back(*item_to_move);
             auto& runinfo = ModulesRunCountsAndPredictedStopTimes[m];
             {
                 DoubleIncrementGuardLockingAndCountingOnDecrement increment_guard(

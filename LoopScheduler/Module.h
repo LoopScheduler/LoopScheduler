@@ -27,7 +27,7 @@ namespace LoopScheduler
         /// Example:
         ///   MyModule::MyModule(...) : Module(...) { ... }
         ///
-        /// @param CanRunInParallel Whether the module can run in another thread while it's running.
+        /// @param CanRunInParallel Whether the module can run in another thread while it's already running.
         /// @param HigherExecutionTimePredictor Predictor to predict the higher timespan.
         /// @param LowerExecutionTimePredictor Predictor to predict the lower timespan.
         Module(

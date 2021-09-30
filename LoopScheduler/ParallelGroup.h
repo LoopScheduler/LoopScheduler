@@ -67,7 +67,14 @@ namespace LoopScheduler
         std::mutex NextEventConditionMutex;
         std::condition_variable NextEventConditionVariable;
 
-        inline bool RunModule(std::shared_ptr<Module>&, std::unique_lock<std::shared_mutex>&);
+        inline bool RunModule(
+            std::shared_ptr<Module>&,
+            std::unique_lock<std::shared_mutex>&,
+            std::list<int>&,
+            std::list<int>&,
+            std::list<int>::iterator&,
+            int
+        );
         inline bool RunGroup(std::shared_ptr<Group>&, std::unique_lock<std::shared_mutex>&);
 
         /// NO MUTEX LOCK

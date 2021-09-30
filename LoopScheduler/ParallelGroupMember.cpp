@@ -4,8 +4,8 @@ namespace LoopScheduler
 {
     ParallelGroupMember::ParallelGroupMember(
             std::variant<std::shared_ptr<Group>, std::shared_ptr<Module>> Member,
-            bool CanRunMoreThanOncePreCycle
+            int RunSharesAfterFirstRun
         ) : Member(Member),
-            CanRunMoreThanOncePreCycle(CanRunMoreThanOncePreCycle)
+            RunSharesAfterFirstRun(RunSharesAfterFirstRun)
     {}
 }

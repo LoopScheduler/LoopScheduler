@@ -12,13 +12,15 @@ namespace LoopScheduler
     struct ParallelGroupMember final
     {
     public:
-        /// @param CanRunMoreThanOncePreCycle Whether the module can run more than once in a single loop iteration.
-        /// @param CanRunInParallel Whether the module can run in another thread while it's already running.
+        /// @param RunSharesAfterFirstRun The number of runs for each additional iteration after the first run.
+        ///                               0 Means it can only run once per loop iteration.
+        ///
+        /// This can be set to more than 1 for those members that need to run more often than others after the first run.
         ParallelGroupMember(
             std::variant<std::shared_ptr<Group>, std::shared_ptr<Module>> Member,
-            bool CanRunMoreThanOncePreCycle = false
+            int RunSharesAfterFirstRun = 0
         );
         std::variant<std::shared_ptr<Group>, std::shared_ptr<Module>> Member;
-        bool CanRunMoreThanOncePreCycle;
+        int RunSharesAfterFirstRun;
     };
 }
