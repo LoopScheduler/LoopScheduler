@@ -61,7 +61,10 @@ namespace LoopScheduler
         /// Note: With each group only having 1 parent,
         /// it's reliable to predict remaining execution times using the child groups.
         /// Also having multiple children of the same group is possible.
-        Group * Parent;
+        Group * Parent; // TODO: Set Loop* recursively using a public member function and have Loop* in Group.
+                        //       Only report Group members in IntroduceMembers.
+                        //       This way custom dynamic Groups / dynamic terminal Groups can also be implemented.
+                        //       (not having dynamic Group members, only dynamic runnable Module-like objects).
         std::vector<std::variant<std::shared_ptr<Group>, std::shared_ptr<Module>>> Members;
         std::vector<std::variant<std::weak_ptr<Group>, std::weak_ptr<Module>>> WeakMembers;
     };
