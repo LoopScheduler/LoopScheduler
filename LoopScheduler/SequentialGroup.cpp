@@ -111,13 +111,25 @@ namespace LoopScheduler
         if (MaxWaitingTime != 0)
             start = std::chrono::steady_clock::now();
 
-        std::unique_lock<std::mutex> lock(NextEventConditionMutex);
-
         bool wait_for_next_module = false;
         bool wait_for_next_group = false;
         double max_exec_time;
-        const auto predicate = [this, &MaxEstimatedExecutionTime, &wait_for_next_module, &wait_for_next_group, &max_exec_time] {
-            std::shared_lock<std::shared_mutex> lock(MembersSharedMutex);
+
+        std::shared_lock<std::shared_mutex> lock(MembersSharedMutex);
+        if (ShouldIncrementCurrentMemberIndex())
+            return;
+        if (ShouldRunNextModuleFromCurrentMemberIndex(MaxEstimatedExecutionTime)) // There is a next module to run.
+            wait_for_next_module = true; // Wait outside condition_variable::wait later
+        if (ShouldTryRunNextGroupFromCurrentMemberIndex(MaxEstimatedExecutionTime, max_exec_time)) // Can wait for the group.
+            wait_for_next_group = true; // Wait outside condition_variable::wait later
+        if ((CurrentMemberIndex == (int)Members.size() - 1)
+                && (RunningThreadsCount == 0)) // (And no next module to run) => IsDone=true.
+        {
+            return;
+        }
+
+        const auto predicate = [this, &lock, &MaxEstimatedExecutionTime, &wait_for_next_module, &wait_for_next_group, &max_exec_time] {
+            lock.lock();
             if (ShouldIncrementCurrentMemberIndex())
             {
                 return true;
@@ -137,18 +149,26 @@ namespace LoopScheduler
             {
                 return true;
             }
+            lock.unlock();
             return false;
-        };
+        }; // Locked when predicated returns true, should be unlocked at entry
 
-        if (MaxWaitingTime == 0)
-            NextEventConditionVariable.wait(lock, predicate);
-        else if (MaxWaitingTime > 0)
-            NextEventConditionVariable.wait_for(lock, std::chrono::duration<double>(MaxWaitingTime), predicate);
-        lock.unlock();
+        if (!wait_for_next_module && !wait_for_next_group)
+        {
+            lock.unlock(); // Locked after wait/wait_for
+            std::unique_lock<std::mutex> cv_lock(NextEventConditionMutex);
+            if (MaxWaitingTime == 0)
+                NextEventConditionVariable.wait(cv_lock, predicate);
+            else if (MaxWaitingTime > 0)
+                NextEventConditionVariable.wait_for(cv_lock, std::chrono::duration<double>(MaxWaitingTime), predicate);
+        }
 
         if (wait_for_next_module)
         {
             auto& member = std::get<std::shared_ptr<Module>>(Members[CurrentMemberIndex]);
+            if (member->IsAvailable())
+                return;
+            lock.unlock();
             if (MaxWaitingTime == 0)
             {
                 member->WaitForRunAvailability();
@@ -166,6 +186,9 @@ namespace LoopScheduler
         if (wait_for_next_group)
         {
             auto& member = std::get<std::shared_ptr<Group>>(Members[CurrentMemberIndex]);
+            if (member->IsAvailable(max_exec_time))
+                return;
+            lock.unlock();
             if (MaxWaitingTime == 0)
                 member->WaitForAvailability(max_exec_time);
             else
