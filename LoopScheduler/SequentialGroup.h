@@ -1,7 +1,7 @@
 #pragma once
 
 #include "LoopScheduler.dec.h"
-#include "Group.h"
+#include "ModuleHoldingGroup.h"
 
 #include <chrono>
 #include <condition_variable>
@@ -18,7 +18,7 @@ namespace LoopScheduler
     /// When a stage is done, the next stage starts ignoring whether the next stage's module can run.
     /// The module or subgroup of a stage won't run in parallel with other stages.
     /// A stage is defined as a member of a vector using the constructor.
-    class SequentialGroup final : public Group
+    class SequentialGroup final : public ModuleHoldingGroup
     {
     public:
         SequentialGroup(std::vector<std::variant<std::shared_ptr<Group>, std::shared_ptr<Module>>>);

@@ -1,7 +1,7 @@
 #include "SequentialGroup.h"
 
 #include <algorithm>
-#include <exception>
+#include <utility>
 
 #include "Module.h"
 
@@ -11,42 +11,20 @@ namespace LoopScheduler
             std::vector<std::variant<std::shared_ptr<Group>, std::shared_ptr<Module>>> Members
         ) : Members(Members), CurrentMemberIndex(-1), CurrentMemberRunsCount(0), RunningThreadsCount(0)
     {
-        for (int i = 0; i < Members.size(); i++)
-        {
-            if (std::holds_alternative<std::shared_ptr<Module>>(Members[i]))
-            {
-                if (!std::get<std::shared_ptr<Module>>(Members[i])->SetParent(this))
-                {
-                    for (int j = 0; j < i; j++)
-                        if (std::holds_alternative<std::shared_ptr<Module>>(Members[j]))
-                            std::get<std::shared_ptr<Module>>(Members[j])->SetParent(nullptr); // Revert
-                    throw std::logic_error("A module cannot be a member of more than 1 groups.");
-                }
-            }
-        }
-
         std::vector<std::shared_ptr<Group>> member_groups;
+        std::vector<std::shared_ptr<Module>> member_modules;
         for (auto& member : Members)
             if (std::holds_alternative<std::shared_ptr<Group>>(member))
                 member_groups.push_back(std::get<std::shared_ptr<Group>>(member));
-        IntroduceMembers(member_groups);
+            else
+                member_modules.push_back(std::get<std::shared_ptr<Module>>(member));
+
+        IntroduceMemberModules(std::move(member_modules));
+        IntroduceMemberGroups(std::move(member_groups));
 
         for (auto& member : Members)
             if (std::holds_alternative<std::shared_ptr<Group>>(member))
                 GroupMembers.push_back(std::get<std::shared_ptr<Group>>(member));
-    }
-
-    SequentialGroup::~SequentialGroup()
-    {
-        for (int i = 0; i < Members.size(); i++)
-        {
-            if (std::holds_alternative<std::shared_ptr<Module>>(Members[i]))
-            {
-                auto& m = std::get<std::shared_ptr<Module>>(Members[i]);
-                if (m->GetParent() == this)
-                    m->SetParent(nullptr);
-            }
-        }
     }
 
     class IncrementGuardLockingOnDecrement

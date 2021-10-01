@@ -1,7 +1,7 @@
 #pragma once
 
 #include "LoopScheduler.dec.h"
-#include "Group.h"
+#include "ModuleHoldingGroup.h"
 
 #include <chrono>
 #include <condition_variable>
@@ -24,7 +24,7 @@ namespace LoopScheduler
     /// That means when this group is in the root,
     /// sometimes the last modules of an iteration might be running
     /// at the same time as the first modules from the next iteration.
-    class ParallelGroup final : public Group
+    class ParallelGroup final : public ModuleHoldingGroup
     {
     public:
         ParallelGroup(std::vector<ParallelGroupMember>);

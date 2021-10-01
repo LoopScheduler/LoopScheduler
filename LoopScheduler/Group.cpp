@@ -39,7 +39,7 @@ namespace LoopScheduler
         return LoopPtr;
     }
 
-    void Group::IntroduceMembers(std::vector<std::shared_ptr<Group>> MemberGroups)
+    void Group::IntroduceMemberGroups(std::vector<std::shared_ptr<Group>> MemberGroups)
     {
         if (this->MemberGroups.size() != 0)
             throw std::logic_error("Cannot introduce members more than once.");

@@ -12,7 +12,7 @@ namespace LoopScheduler
     /// @brief Represents a group of modules or other groups scheduled in a certain way.
     ///
     /// Group members must only be specified on construction.
-    /// Derived classes have to call IntroduceMembers in the constructor.
+    /// Derived classes have to call IntroduceMemberGroups in the constructor.
     /// Members list change should not be allowed.
     class Group
     {
@@ -53,7 +53,7 @@ namespace LoopScheduler
         /// @brief Has to be called once in the derived class's constructor.
         ///
         /// Members list change should not be allowed.
-        void IntroduceMembers(std::vector<std::shared_ptr<Group>>);
+        void IntroduceMemberGroups(std::vector<std::shared_ptr<Group>>);
         /// @return Whether it was successful. Should revert the changes if not successful.
         ///
         /// Handles setting the loop for members of other types than Group.

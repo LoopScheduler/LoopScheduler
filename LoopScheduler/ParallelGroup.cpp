@@ -1,7 +1,7 @@
 #include "ParallelGroup.h"
 
 #include <algorithm>
-#include <exception>
+#include <utility>
 
 #include "Module.h"
 
@@ -10,43 +10,21 @@ namespace LoopScheduler
     ParallelGroup::ParallelGroup(std::vector<ParallelGroupMember> Members)
         : Members(Members), RunningThreadsCount(0), NotifyingCounter(0)
     {
-        for (int i = 0; i < Members.size(); i++)
-        {
-            if (std::holds_alternative<std::shared_ptr<Module>>(Members[i].Member))
-            {
-                if (!std::get<std::shared_ptr<Module>>(Members[i].Member)->SetParent(this))
-                {
-                    for (int j = 0; j < i; j++)
-                        if (std::holds_alternative<std::shared_ptr<Module>>(Members[j].Member))
-                            std::get<std::shared_ptr<Module>>(Members[j].Member)->SetParent(this); // Revert
-                    throw std::logic_error("A module cannot be a member of more than 1 groups.");
-                }
-            }
-        }
-
         std::vector<std::shared_ptr<Group>> member_groups;
+        std::vector<std::shared_ptr<Module>> member_modules;
         for (auto& member : Members)
             if (std::holds_alternative<std::shared_ptr<Group>>(member.Member))
                 member_groups.push_back(std::get<std::shared_ptr<Group>>(member.Member));
-        IntroduceMembers(member_groups);
+            else
+                member_modules.push_back(std::get<std::shared_ptr<Module>>(member.Member));
+
+        IntroduceMemberModules(std::move(member_modules));
+        IntroduceMemberGroups(std::move(member_groups));
 
         StartNextIterationForThisGroup();
         for (auto& member : Members)
             if (std::holds_alternative<std::shared_ptr<Group>>(member.Member))
                 GroupMembers.push_back(std::get<std::shared_ptr<Group>>(member.Member));
-    }
-
-    ParallelGroup::~ParallelGroup()
-    {
-        for (int i = 0; i < Members.size(); i++)
-        {
-            if (std::holds_alternative<std::shared_ptr<Module>>(Members[i].Member))
-            {
-                auto& m = std::get<std::shared_ptr<Module>>(Members[i].Member);
-                if (m->GetParent() == this)
-                    m->SetParent(nullptr);
-            }
-        }
     }
 
     /// Increments the 2 numbers on construction without locking.
