@@ -26,15 +26,12 @@ WorkingModule::WorkingModule(int WorkAmount, int IterationsCountLimit)
 void WorkingModule::OnRun()
 {
     IterationsCount++;
-    if (IterationsCount >= IterationsCountLimit)
-        GetLoop()->Stop();
-    else
+    for (int i = 0; i < WorkAmount; i++)
     {
-        for (int i = 0; i < WorkAmount; i++)
-        {
-            for (int i = 0; i < 100; i++); // Work unit
-        }
+        for (int i = 0; i < 100; i++); // Work unit
     }
+    if (IterationsCount >= IterationsCountLimit) // Will stop after this iteration
+        GetLoop()->Stop();
 }
 
 int main()
@@ -91,15 +88,12 @@ int main()
                     while (true)
                     {
                         IterationsCount++;
+                        for (int i = 0; i < WorkAmount; i++)
+                        {
+                            for (int i = 0; i < 100; i++); // Work unit
+                        }
                         if (IterationsCount >= IterationsCountLimit)
                             return;
-                        else
-                        {
-                            for (int i = 0; i < WorkAmount; i++)
-                            {
-                                for (int i = 0; i < 100; i++); // Work unit
-                            }
-                        }
                     }
                 })
             );
