@@ -8,7 +8,7 @@
 namespace LoopScheduler
 {
     SequentialGroup::SequentialGroup(
-            std::vector<std::variant<std::shared_ptr<Group>, std::shared_ptr<Module>>> Members
+            std::vector<SequentialGroupMember> Members
         ) : Members(Members), CurrentMemberIndex(-1), CurrentMemberRunsCount(0), RunningThreadsCount(0)
     {
         std::vector<std::shared_ptr<Group>> member_groups;

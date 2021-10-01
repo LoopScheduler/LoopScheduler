@@ -12,6 +12,7 @@
 
 namespace LoopScheduler
 {
+    typedef std::variant<std::shared_ptr<Group>, std::shared_ptr<Module>> SequentialGroupMember;
     /// @brief A group that runs the subgroups and modules only once per iteration, in order and without overlapping.
     ///
     /// Each stage is done when the subgroup or module of that stage is done.
@@ -21,7 +22,7 @@ namespace LoopScheduler
     class SequentialGroup final : public ModuleHoldingGroup
     {
     public:
-        SequentialGroup(std::vector<std::variant<std::shared_ptr<Group>, std::shared_ptr<Module>>>);
+        SequentialGroup(std::vector<SequentialGroupMember>);
     protected:
         virtual bool RunNextModule(double MaxEstimatedExecutionTime = 0) override;
         virtual bool IsAvailable(double MaxEstimatedExecutionTime = 0) override;
