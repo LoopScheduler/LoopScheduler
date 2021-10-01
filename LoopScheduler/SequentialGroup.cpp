@@ -19,8 +19,7 @@ namespace LoopScheduler
             else
                 member_modules.push_back(std::get<std::shared_ptr<Module>>(member));
 
-        IntroduceMemberModules(std::move(member_modules));
-        IntroduceMemberGroups(std::move(member_groups));
+        IntroduceMembers(std::move(member_groups), std::move(member_modules));
 
         for (auto& member : Members)
             if (std::holds_alternative<std::shared_ptr<Group>>(member))
