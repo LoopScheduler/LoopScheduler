@@ -189,7 +189,7 @@ void test1()
     sequantial_members.push_back(std::make_shared<WorkingModule>(100000, 150000, report, "Single-threaded worker"));
     std::shared_ptr<LoopScheduler::SequentialGroup> sequential_group(new LoopScheduler::SequentialGroup(sequantial_members));
 
-    LoopScheduler::Loop loop(parallel_group);
+    LoopScheduler::Loop loop(sequential_group);
     loop.Run(4);
 
     std::cout << report.GetReport();
