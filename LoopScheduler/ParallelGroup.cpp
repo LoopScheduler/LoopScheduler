@@ -176,6 +176,8 @@ namespace LoopScheduler
     }
     inline bool ParallelGroup::IsAvailableNoLock(double MaxEstimatedExecutionTime)
     {
+        if (MainQueue.size() == 0) // IsDone()
+            return true;
         for (auto i : MainQueue)
         {
             if (std::holds_alternative<std::shared_ptr<Module>>(Members[i].Member))
