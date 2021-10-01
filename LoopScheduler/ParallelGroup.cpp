@@ -211,7 +211,6 @@ namespace LoopScheduler
         return false;
     }
 
-    // TODO: Fix this. Blocks combined_test.cpp: test1
     void ParallelGroup::WaitForAvailability(double MaxEstimatedExecutionTime, double MaxWaitingTime)
     {
         std::chrono::time_point<std::chrono::steady_clock> start;

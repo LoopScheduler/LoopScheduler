@@ -113,7 +113,10 @@ namespace LoopScheduler
 
         std::unique_lock<std::mutex> lock(NextEventConditionMutex);
 
-        const auto predicate = [this, &MaxEstimatedExecutionTime, &MaxWaitingTime, &start] {
+        bool wait_for_next_module = false;
+        bool wait_for_next_group = false;
+        double max_exec_time;
+        const auto predicate = [this, &MaxEstimatedExecutionTime, &wait_for_next_module, &wait_for_next_group, &max_exec_time] {
             std::shared_lock<std::shared_mutex> lock(MembersSharedMutex);
             if (ShouldIncrementCurrentMemberIndex())
             {
@@ -121,36 +124,12 @@ namespace LoopScheduler
             }
             if (ShouldRunNextModuleFromCurrentMemberIndex(MaxEstimatedExecutionTime)) // There is a next module to run.
             {
-                auto& member = std::get<std::shared_ptr<Module>>(Members[CurrentMemberIndex]);
-                lock.unlock();
-                if (MaxWaitingTime == 0)
-                {
-                    member->WaitForRunAvailability();
-                }
-                else
-                {
-                    auto stop = start + std::chrono::duration<double>(MaxWaitingTime);
-                    std::chrono::duration<double> time = stop - std::chrono::steady_clock::now();
-                    double t = time.count();
-                    if (t > 0)
-                        member->WaitForRunAvailability(t);
-                }
+                wait_for_next_module = true; // Wait outside condition_variable::wait
                 return true;
             }
-            if (double max_exec_time; ShouldTryRunNextGroupFromCurrentMemberIndex(MaxEstimatedExecutionTime, max_exec_time)) // Can wait for the group.
+            if (ShouldTryRunNextGroupFromCurrentMemberIndex(MaxEstimatedExecutionTime, max_exec_time)) // Can wait for the group.
             {
-                auto& member = std::get<std::shared_ptr<Group>>(Members[CurrentMemberIndex]);
-                lock.unlock();
-                if (MaxWaitingTime == 0)
-                    member->WaitForAvailability(max_exec_time);
-                else
-                {
-                    auto stop = start + std::chrono::duration<double>(MaxWaitingTime);
-                    std::chrono::duration<double> time = stop - std::chrono::steady_clock::now();
-                    double t = time.count();
-                    if (t > 0)
-                        member->WaitForAvailability(max_exec_time, t);
-                }
+                wait_for_next_group = true; // Wait outside condition_variable::wait
                 return true;
             }
             if ((CurrentMemberIndex == (int)Members.size() - 1)
@@ -165,6 +144,40 @@ namespace LoopScheduler
             NextEventConditionVariable.wait(lock, predicate);
         else if (MaxWaitingTime > 0)
             NextEventConditionVariable.wait_for(lock, std::chrono::duration<double>(MaxWaitingTime), predicate);
+        lock.unlock();
+
+        if (wait_for_next_module)
+        {
+            auto& member = std::get<std::shared_ptr<Module>>(Members[CurrentMemberIndex]);
+            if (MaxWaitingTime == 0)
+            {
+                member->WaitForRunAvailability();
+            }
+            else
+            {
+                auto stop = start + std::chrono::duration<double>(MaxWaitingTime);
+                std::chrono::duration<double> time = stop - std::chrono::steady_clock::now();
+                double t = time.count();
+                if (t > 0)
+                    member->WaitForRunAvailability(t);
+            }
+            return;
+        }
+        if (wait_for_next_group)
+        {
+            auto& member = std::get<std::shared_ptr<Group>>(Members[CurrentMemberIndex]);
+            if (MaxWaitingTime == 0)
+                member->WaitForAvailability(max_exec_time);
+            else
+            {
+                auto stop = start + std::chrono::duration<double>(MaxWaitingTime);
+                std::chrono::duration<double> time = stop - std::chrono::steady_clock::now();
+                double t = time.count();
+                if (t > 0)
+                    member->WaitForAvailability(max_exec_time, t);
+            }
+            return;
+        }
     }
 
     bool SequentialGroup::IsDone()
