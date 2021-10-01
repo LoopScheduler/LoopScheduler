@@ -14,7 +14,7 @@
 class Report
 {
 public:
-    int ReportStart(std::thread::id ThreadId, std::string Name);
+    int ReportStart(std::string Name);
     void ReportStop(int);
     std::string GetReport();
 private:
@@ -36,11 +36,11 @@ private:
     std::vector<RunInfo> Runs;
 };
 
-int Report::ReportStart(std::thread::id ThreadId, std::string Name)
+int Report::ReportStart(std::string Name)
 {
     Mutex.lock();
     int result = Runs.size();
-    Runs.push_back(RunInfo(ThreadId, Name, std::chrono::steady_clock::now(), std::chrono::steady_clock::now()));
+    Runs.push_back(RunInfo(std::this_thread::get_id(), Name, std::chrono::steady_clock::now(), std::chrono::steady_clock::now()));
     Mutex.unlock();
     return result;
 }
@@ -53,7 +53,7 @@ void Report::ReportStop(int i)
 std::string Report::GetReport()
 {
     Mutex.lock();
-    std::string result;
+    std::string result = "";
     std::chrono::steady_clock::time_point start;
     std::map<std::thread::id, int> thread_numbers;
     int thread_counter = 0;
@@ -66,7 +66,7 @@ std::string Report::GetReport()
         result += std::to_string(thread_numbers[run_info.ThreadId]) + ": ";
         result += run_info.Name + ", ";
         result += std::to_string(((std::chrono::duration<double>)(run_info.Start - start)).count()) + "-";
-        result += std::to_string(((std::chrono::duration<double>)(run_info.Stop - start)).count());
+        result += std::to_string(((std::chrono::duration<double>)(run_info.Stop - start)).count()) + '\n';
     }
     Mutex.unlock();
     return result;
@@ -83,7 +83,7 @@ Report::RunInfo::RunInfo(
 class IdlingTimerModule : public LoopScheduler::Module
 {
 public:
-    IdlingTimerModule(double TimeMin, double TimeMax, double IdlingTime);
+    IdlingTimerModule(double TimeMin, double TimeMax, double IdlingTime, Report& ReportRef, std::string Name);
 protected:
     virtual void OnRun() override;
 private:
@@ -91,23 +91,29 @@ private:
     std::default_random_engine random_engine;
     std::uniform_real_distribution<double> random_distribution;
     double IdlingTime;
+    Report& ReportRef;
+    std::string Name;
 };
 
-IdlingTimerModule::IdlingTimerModule(double TimeMin, double TimeMax, double IdlingTime)
+IdlingTimerModule::IdlingTimerModule(double TimeMin, double TimeMax, double IdlingTime, Report& ReportRef, std::string Name)
     : random_device(),
       random_engine(random_device()),
       random_distribution(TimeMin, TimeMax),
-      IdlingTime(IdlingTime)
+      IdlingTime(IdlingTime),
+      ReportRef(ReportRef),
+      Name(Name)
 {
 }
 void IdlingTimerModule::OnRun()
 {
+    int report_id = ReportRef.ReportStart(Name);
     double Time = random_distribution(random_engine);
     auto start = std::chrono::steady_clock::now();
     while (((std::chrono::duration<double>)(std::chrono::steady_clock::now() - start)).count() < Time)
     {
         Idle(IdlingTime);
     }
+    ReportRef.ReportStop(report_id);
 }
 
 class StoppingModule : public LoopScheduler::Module
@@ -134,33 +140,59 @@ void StoppingModule::OnRun()
 class WorkingModule : public LoopScheduler::Module
 {
 public:
-    WorkingModule(int WorkAmountMin, int WorkAmountMax);
+    WorkingModule(int WorkAmountMin, int WorkAmountMax, Report& ReportRef, std::string Name);
 protected:
     virtual void OnRun() override;
 private:
     std::random_device random_device;
     std::default_random_engine random_engine;
     std::uniform_int_distribution<int> random_distribution;
+    Report& ReportRef;
+    std::string Name;
 };
 
-WorkingModule::WorkingModule(int WorkAmountMin, int WorkAmountMax)
+WorkingModule::WorkingModule(int WorkAmountMin, int WorkAmountMax, Report& ReportRef, std::string Name)
     : random_device(),
       random_engine(random_device()),
-      random_distribution(WorkAmountMin, WorkAmountMax)
+      random_distribution(WorkAmountMin, WorkAmountMax),
+      ReportRef(ReportRef),
+      Name(Name)
 {
 }
 void WorkingModule::OnRun()
 {
+    int report_id = ReportRef.ReportStart(Name);
     int WorkAmount = random_distribution(random_engine);
     for (int i = 0; i < WorkAmount; i++)
     {
         for (int i = 0; i < 100; i++); // Work unit
     }
+    ReportRef.ReportStop(report_id);
 }
 
 void test1()
 {
-    //
+    Report report;
+    std::vector<LoopScheduler::ParallelGroupMember> parallel_members;
+    parallel_members.push_back(LoopScheduler::ParallelGroupMember(std::make_shared<IdlingTimerModule>(0.01, 0.015, 0.001, report, "Idler")));
+    for (int i = 0; i < 4; i++)
+    {
+        parallel_members.push_back(LoopScheduler::ParallelGroupMember(
+            std::make_shared<WorkingModule>(100000, 150000, report, "Worker" + std::to_string(i)), 1
+        ));
+    }
+    parallel_members.push_back(LoopScheduler::ParallelGroupMember(std::make_shared<StoppingModule>(10)));
+    std::shared_ptr<LoopScheduler::ParallelGroup> parallel_group(new LoopScheduler::ParallelGroup(parallel_members));
+
+    std::vector<LoopScheduler::SequentialGroupMember> sequantial_members;
+    sequantial_members.push_back(parallel_group);
+    sequantial_members.push_back(std::make_shared<WorkingModule>(100000, 150000, report, "Single-threaded worker"));
+    std::shared_ptr<LoopScheduler::SequentialGroup> sequential_group(new LoopScheduler::SequentialGroup(sequantial_members));
+
+    LoopScheduler::Loop loop(parallel_group);
+    loop.Run(4);
+
+    std::cout << report.GetReport();
 }
 
 int main()
