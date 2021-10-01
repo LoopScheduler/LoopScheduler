@@ -22,54 +22,10 @@ namespace LoopScheduler
 
     Loop::Loop(std::shared_ptr<Group> Architecture) : Architecture(Architecture), _IsRunning(false), ShouldStop(false)
     {
-        std::map<std::shared_ptr<Group>, boolean> visited;
-        std::queue<std::shared_ptr<Group>> queue;
-        queue.push(Architecture);
-        while (!queue.empty())
-        {
-            auto next = queue.front();
-            queue.pop();
-            for (auto& member : next->GetMembers())
-            {
-                if (std::holds_alternative<std::weak_ptr<Group>>(member))
-                {
-                    auto g = std::get<std::weak_ptr<Group>>(member).lock();
-                    if (!visited[g])
-                    {
-                        queue.push(g);
-                        visited[g] = true;
-                    }
-                }
-                else
-                {
-                    Modules.push_back(std::get<std::weak_ptr<Module>>(member).lock());
-                }
-            }
-        }
-        bool failed = false;
-        std::list<std::shared_ptr<Module>> visited_modules;
-        for (auto& m : Modules)
-        {
-            std::unique_lock<std::shared_mutex> lock(m->SharedMutex);
-            if (m->LoopPtr != nullptr && m->LoopPtr != this)
-            {
-                failed = true;
-                break;
-            }
-            m->LoopPtr = this;
-        }
-        if (failed)
-        {
-            // Revert
-            for (auto& m : visited_modules)
-            {
-                std::unique_lock<std::shared_mutex> lock(m->SharedMutex);
-                m->LoopPtr = nullptr;
-            }
-            Architecture = nullptr;
-            Modules.clear();
-            throw std::logic_error("A module cannot be in more than 1 loop.");
-        }
+        if (!Architecture->SetLoop(this))
+            throw std::logic_error(
+                "There was a problem in the architecture. Each group/module can only be a member of 1 group and 1 loop."
+            );
     }
 
     Loop::~Loop()
@@ -80,11 +36,7 @@ namespace LoopScheduler
             guard.unlock();
             Stop();
         }
-        for (auto& m : Modules)
-        {
-            std::unique_lock<std::shared_mutex> lock(m->SharedMutex);
-            m->LoopPtr = nullptr;
-        }
+        Architecture->SetLoop(nullptr);
     }
 
     void Loop::Run(int threads_count)
@@ -161,5 +113,15 @@ namespace LoopScheduler
     {
         std::unique_lock<std::mutex> guard(Mutex);
         return _IsRunning;
+    }
+
+    Group * Loop::GetArchitecture()
+    {
+        return Architecture.get();
+    }
+
+    std::weak_ptr<Group> Loop::GetArchitectureWeakPtr()
+    {
+        return std::weak_ptr<Group>(Architecture);
     }
 }

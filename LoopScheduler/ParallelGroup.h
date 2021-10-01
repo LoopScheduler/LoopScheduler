@@ -28,6 +28,7 @@ namespace LoopScheduler
     {
     public:
         ParallelGroup(std::vector<ParallelGroupMember>);
+        ~ParallelGroup();
     protected:
         virtual bool RunNextModule(double MaxEstimatedExecutionTime = 0) override;
         virtual bool IsAvailable(double MaxEstimatedExecutionTime = 0) override;
@@ -36,6 +37,7 @@ namespace LoopScheduler
         virtual void StartNextIteration() override;
         virtual double PredictHigherRemainingExecutionTime() override;
         virtual double PredictLowerRemainingExecutionTime() override;
+        virtual bool UpdateLoop(Loop*) override;
     private:
         /// @brief A shared mutex for class members.
         std::shared_mutex MembersSharedMutex;

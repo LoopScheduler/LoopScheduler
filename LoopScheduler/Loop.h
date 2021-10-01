@@ -12,7 +12,6 @@ namespace LoopScheduler
     /// @brief Runs a multi-threaded loop using an architecture defined by Group objects.
     class Loop final
     {
-        friend Module; // To access the Architecture when idling.
     public:
         Loop(std::shared_ptr<Group> Architecture);
         ~Loop();
@@ -28,10 +27,12 @@ namespace LoopScheduler
         void StopAndWait();
         /// @brief Thread-safe method to check whether the loop is running.
         bool IsRunning();
+        /// @return Pointer to the architecture group. Has to be used immediately because it's a normal pointer.
+        Group * GetArchitecture();
+        /// @return A weak pointer to the architecture group to use later.
+        std::weak_ptr<Group> GetArchitectureWeakPtr();
     private:
         std::shared_ptr<Group> Architecture;
-        /// @brief May contain duplicates.
-        std::vector<std::shared_ptr<Module>> Modules;
         std::mutex Mutex;
         std::condition_variable ConditionVariable;
         /// @brief Only set in Run()

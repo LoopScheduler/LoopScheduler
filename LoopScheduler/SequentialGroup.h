@@ -22,6 +22,7 @@ namespace LoopScheduler
     {
     public:
         SequentialGroup(std::vector<std::variant<std::shared_ptr<Group>, std::shared_ptr<Module>>>);
+        virtual ~SequentialGroup();
     protected:
         virtual bool RunNextModule(double MaxEstimatedExecutionTime = 0) override;
         virtual bool IsAvailable(double MaxEstimatedExecutionTime = 0) override;
@@ -30,6 +31,7 @@ namespace LoopScheduler
         virtual void StartNextIteration() override;
         virtual double PredictHigherRemainingExecutionTime() override;
         virtual double PredictLowerRemainingExecutionTime() override;
+        virtual bool UpdateLoop(Loop*) override;
     private:
         /// @brief A shared mutex for class members.
         std::shared_mutex MembersSharedMutex;

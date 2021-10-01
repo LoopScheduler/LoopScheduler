@@ -1,6 +1,7 @@
 #include "ParallelGroup.h"
 
 #include <algorithm>
+#include <exception>
 
 #include "Module.h"
 
@@ -9,15 +10,43 @@ namespace LoopScheduler
     ParallelGroup::ParallelGroup(std::vector<ParallelGroupMember> Members)
         : Members(Members), RunningThreadsCount(0), NotifyingCounter(0)
     {
-        std::vector<std::variant<std::shared_ptr<Group>, std::shared_ptr<Module>>> simple_members;
+        for (int i = 0; i < Members.size(); i++)
+        {
+            if (std::holds_alternative<std::shared_ptr<Module>>(Members[i].Member))
+            {
+                if (!std::get<std::shared_ptr<Module>>(Members[i].Member)->SetParent(this))
+                {
+                    for (int j = 0; j < i; j++)
+                        if (std::holds_alternative<std::shared_ptr<Module>>(Members[j].Member))
+                            std::get<std::shared_ptr<Module>>(Members[j].Member)->SetParent(this); // Revert
+                    throw std::logic_error("A module cannot be a member of more than 1 groups.");
+                }
+            }
+        }
+
+        std::vector<std::shared_ptr<Group>> member_groups;
         for (auto& member : Members)
-            simple_members.push_back(member.Member);
-        IntroduceMembers(simple_members);
+            if (std::holds_alternative<std::shared_ptr<Group>>(member.Member))
+                member_groups.push_back(std::get<std::shared_ptr<Group>>(member.Member));
+        IntroduceMembers(member_groups);
 
         StartNextIterationForThisGroup();
         for (auto& member : Members)
             if (std::holds_alternative<std::shared_ptr<Group>>(member.Member))
                 GroupMembers.push_back(std::get<std::shared_ptr<Group>>(member.Member));
+    }
+
+    ParallelGroup::~ParallelGroup()
+    {
+        for (int i = 0; i < Members.size(); i++)
+        {
+            if (std::holds_alternative<std::shared_ptr<Module>>(Members[i].Member))
+            {
+                auto& m = std::get<std::shared_ptr<Module>>(Members[i].Member);
+                if (m->GetParent() == this)
+                    m->SetParent(nullptr);
+            }
+        }
     }
 
     /// Increments the 2 numbers on construction without locking.
@@ -297,6 +326,25 @@ namespace LoopScheduler
             result = std::max(result, item.first->PredictLowerRemainingExecutionTime());
         }
         return result;
+    }
+
+    bool ParallelGroup::UpdateLoop(Loop * LoopPtr)
+    {
+        for (int i = 0; i < Members.size(); i++)
+        {
+            if (std::holds_alternative<std::shared_ptr<Module>>(Members[i].Member))
+            {
+                auto& m = std::get<std::shared_ptr<Module>>(Members[i].Member);
+                if (!m->SetLoop(LoopPtr))
+                {
+                    for (int j = 0; j < i; j++)
+                        if (std::holds_alternative<std::shared_ptr<Module>>(Members[j].Member))
+                            std::get<std::shared_ptr<Module>>(Members[j].Member)->SetLoop(nullptr);
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 
     ParallelGroup::integer::integer() : value(0) {}

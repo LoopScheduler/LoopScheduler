@@ -16,6 +16,7 @@ namespace LoopScheduler
     /// Members list change should not be allowed.
     class Group
     {
+        friend Loop;
     public:
         Group();
         virtual ~Group();
@@ -45,14 +46,25 @@ namespace LoopScheduler
         virtual double PredictLowerRemainingExecutionTime() = 0;
         /// @brief Returns the group's parent group.
         Group * GetParent();
-        /// @brief Returns the group's members.
-        std::vector<std::variant<std::weak_ptr<Group>, std::weak_ptr<Module>>> GetMembers();
+        /// @brief Returns the group's group members.
+        std::vector<std::weak_ptr<Group>> GetMemberGroups();
+        Loop * GetLoop();
     protected:
-        /// @brief Has to be called once in the derived class's constructor after initializing the members.
+        /// @brief Has to be called once in the derived class's constructor.
         ///
         /// Members list change should not be allowed.
-        void IntroduceMembers(std::vector<std::variant<std::shared_ptr<Group>, std::shared_ptr<Module>>>);
+        void IntroduceMembers(std::vector<std::shared_ptr<Group>>);
+        /// @return Whether it was successful. Should revert the changes if not successful.
+        ///
+        /// Handles setting the loop for members of other types than Group.
+        virtual bool UpdateLoop(Loop*) = 0;
     private:
+        /// @brief Accessed by Loop.
+        ///
+        /// Sets loop recursively.
+        ///
+        /// @return Whether it was successful.
+        bool SetLoop(Loop * LoopPtr);
         std::shared_mutex SharedMutex;
         /// @brief Cannot have 2 parents, only be able to set when parent is destructed.
         ///        Could check for loops using this,
@@ -61,11 +73,9 @@ namespace LoopScheduler
         /// Note: With each group only having 1 parent,
         /// it's reliable to predict remaining execution times using the child groups.
         /// Also having multiple children of the same group is possible.
-        Group * Parent; // TODO: Set Loop* recursively using a public member function and have Loop* in Group.
-                        //       Only report Group members in IntroduceMembers.
-                        //       This way custom dynamic Groups / dynamic terminal Groups can also be implemented.
-                        //       (not having dynamic Group members, only dynamic runnable Module-like objects).
-        std::vector<std::variant<std::shared_ptr<Group>, std::shared_ptr<Module>>> Members;
-        std::vector<std::variant<std::weak_ptr<Group>, std::weak_ptr<Module>>> WeakMembers;
+        Group * Parent;
+        Loop * LoopPtr;
+        std::vector<std::shared_ptr<Group>> MemberGroups;
+        std::vector<std::weak_ptr<Group>> WeakMemberGroups;
     };
 }

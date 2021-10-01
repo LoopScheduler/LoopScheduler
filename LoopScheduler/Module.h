@@ -19,8 +19,6 @@ namespace LoopScheduler
     ///   MyModule::MyModule(...) : Module(...) { ... }
     class Module
     {
-        friend Loop; // To access Loop
-        friend Group; // To access Parent
     public:
         /// @brief To change the default settings in the derived class.
         ///
@@ -84,6 +82,15 @@ namespace LoopScheduler
         ///
         /// Thread-safe
         double PredictLowerExecutionTime();
+
+        /// @brief Should only be called by the Group that has this module as a member.
+        /// @return Whether it was successful. Should fail the operation if false.
+        bool SetParent(Group * Parent);
+        /// @brief Should only be called by the Group that has this module as a member.
+        /// @return Whether it was successful. Should fail the operation if false.
+        bool SetLoop(Loop * LoopPtr);
+        Group * GetParent();
+        Loop * GetLoop();
     protected:
         virtual void OnRun() = 0;
         /// @brief To handle an exception that is derived from std::exception
@@ -125,8 +132,6 @@ namespace LoopScheduler
         ///                            If 0 (default), it will wait until the returned token's Stop() is called,
         ///                            or until the token is destructed.
         IdlingToken StartIdling(double MaxWaitingTimeAfterStop, double TotalMaxWaitingTime = 0);
-
-        Loop * GetLoop();
     private:
         const bool CanRunInParallel;
 

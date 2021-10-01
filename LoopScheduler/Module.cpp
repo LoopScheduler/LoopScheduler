@@ -176,6 +176,36 @@ namespace LoopScheduler
         return LowerExecutionTimePredictor->Predict();
     }
 
+    bool Module::SetParent(Group * Parent)
+    {
+        std::unique_lock<std::shared_mutex> lock(SharedMutex);
+        if (this->Parent != nullptr && Parent != nullptr)
+            return false;
+        this->Parent = Parent;
+        return true;
+    }
+
+    bool Module::SetLoop(Loop * LoopPtr)
+    {
+        std::unique_lock<std::shared_mutex> lock(SharedMutex);
+        if (this->LoopPtr != nullptr && LoopPtr != nullptr)
+            return false;
+        this->LoopPtr = LoopPtr;
+        return true;
+    }
+
+    Group * Module::GetParent()
+    {
+        std::shared_lock<std::shared_mutex> lock(SharedMutex);
+        return Parent;
+    }
+
+    Loop * Module::GetLoop()
+    {
+        std::shared_lock<std::shared_mutex> lock(SharedMutex);
+        return LoopPtr;
+    }
+
     void Module::HandleException(const std::exception& e) {}
     void Module::HandleException(std::exception_ptr e_ptr) {}
 
@@ -225,8 +255,9 @@ namespace LoopScheduler
         double remaining_time = MinWaitingTime;
         while (remaining_time > 0)
         {
-            if (!LoopPtr->Architecture->RunNextModule(remaining_time))
-                LoopPtr->Architecture->WaitForAvailability(remaining_time, remaining_time);
+            auto architecture = LoopPtr->GetArchitecture();
+            if (!architecture->RunNextModule(remaining_time))
+                architecture->WaitForAvailability(remaining_time, remaining_time);
             remaining_time = MinWaitingTime - (
                     (std::chrono::duration<double>)(std::chrono::steady_clock::now() - start)
                 ).count();
@@ -243,8 +274,9 @@ namespace LoopScheduler
             {
                 while (true)
                 {
-                    if (!LoopPtr->Architecture->RunNextModule(MaxWaitingTimeAfterStop))
-                        LoopPtr->Architecture->WaitForAvailability(MaxWaitingTimeAfterStop, MaxWaitingTimeAfterStop * 0.25);
+                    auto architecture = LoopPtr->GetArchitecture();
+                    if (!architecture->RunNextModule(MaxWaitingTimeAfterStop))
+                        architecture->WaitForAvailability(MaxWaitingTimeAfterStop, MaxWaitingTimeAfterStop * 0.25);
                     std::unique_lock<std::mutex> lock(*MutexPtr);
                     if (*ShouldStopPtr)
                         return;
@@ -257,8 +289,9 @@ namespace LoopScheduler
                 while (remaining_time > 0)
                 {
                     double time = std::min(remaining_time, MaxWaitingTimeAfterStop);
-                    if (!LoopPtr->Architecture->RunNextModule(time))
-                        LoopPtr->Architecture->WaitForAvailability(time, time * 0.25);
+                    auto architecture = LoopPtr->GetArchitecture();
+                    if (!architecture->RunNextModule(time))
+                        architecture->WaitForAvailability(time, time * 0.25);
                     std::unique_lock<std::mutex> lock(*MutexPtr);
                     if (*ShouldStopPtr)
                         return;
@@ -270,10 +303,5 @@ namespace LoopScheduler
             }
         });
         return token;
-    }
-
-    Loop * Module::GetLoop()
-    {
-        return LoopPtr;
     }
 }

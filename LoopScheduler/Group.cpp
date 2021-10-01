@@ -10,24 +10,15 @@
 
 namespace LoopScheduler
 {
-    Group::Group() : Parent(nullptr) {}
+    Group::Group() : Parent(nullptr), LoopPtr(nullptr) {}
 
     Group::~Group()
     {
-        for (auto& member : Members)
+        for (auto& member : MemberGroups)
         {
-            if (std::holds_alternative<std::shared_ptr<Group>>(member))
-            {
-                auto& g = std::get<std::shared_ptr<Group>>(member);
-                std::unique_lock<std::shared_mutex> lock(g->SharedMutex);
-                g->Parent = nullptr;
-            }
-            else
-            {
-                auto& m = std::get<std::shared_ptr<Module>>(member);
-                std::unique_lock<std::shared_mutex> lock(m->SharedMutex);
-                m->Parent = nullptr;
-            }
+            std::unique_lock<std::shared_mutex> lock(member->SharedMutex);
+            if (member->Parent == this)
+                member->Parent = nullptr;
         }
     }
 
@@ -37,47 +28,35 @@ namespace LoopScheduler
         return Parent;
     }
 
-    std::vector<std::variant<std::weak_ptr<Group>, std::weak_ptr<Module>>> Group::GetMembers()
+    std::vector<std::weak_ptr<Group>> Group::GetMemberGroups()
     {
-        return WeakMembers;
+        return WeakMemberGroups;
     }
 
-    void Group::IntroduceMembers(std::vector<std::variant<std::shared_ptr<Group>, std::shared_ptr<Module>>> Members)
+    Loop * Group::GetLoop()
     {
-        if (this->Members.size() != 0)
+        std::shared_lock<std::shared_mutex> lock(SharedMutex);
+        return LoopPtr;
+    }
+
+    void Group::IntroduceMembers(std::vector<std::shared_ptr<Group>> MemberGroups)
+    {
+        if (this->MemberGroups.size() != 0)
             throw std::logic_error("Cannot introduce members more than once.");
 
         bool failed = false;
         std::list<std::shared_ptr<Group>> visited_groups;
-        std::list<std::shared_ptr<Module>> visited_modules;
-        for (auto& member : Members)
+        for (auto& member : MemberGroups)
         {
-            if (std::holds_alternative<std::shared_ptr<Group>>(member))
+            std::unique_lock<std::shared_mutex> lock(member->SharedMutex);
+            if (member->Parent != nullptr && member->Parent != this)
             {
-                auto& g = std::get<std::shared_ptr<Group>>(member);
-                std::unique_lock<std::shared_mutex> lock(g->SharedMutex);
-                if (g->Parent != nullptr && g->Parent != this)
-                {
-                    failed = true;
-                    break;
-                }
-                visited_groups.push_back(g);
-                g->Parent = this;
-                WeakMembers.push_back(std::weak_ptr<Group>(g));
+                failed = true;
+                break;
             }
-            else
-            {
-                auto& m = std::get<std::shared_ptr<Module>>(member);
-                std::unique_lock<std::shared_mutex> lock(m->SharedMutex);
-                if (m->Parent != nullptr && m->Parent != this)
-                {
-                    failed = true;
-                    break;
-                }
-                visited_modules.push_back(m);
-                m->Parent = this;
-                WeakMembers.push_back(std::weak_ptr<Module>(m));
-            }
+            visited_groups.push_back(member);
+            member->Parent = this;
+            WeakMemberGroups.push_back(std::weak_ptr<Group>(member));
         }
         if (failed)
         {
@@ -87,14 +66,34 @@ namespace LoopScheduler
                 std::unique_lock<std::shared_mutex> lock(g->SharedMutex);
                 g->Parent = nullptr;
             }
-            for (auto& m : visited_modules)
-            {
-                std::unique_lock<std::shared_mutex> lock(m->SharedMutex);
-                m->Parent = nullptr;
-            }
-            WeakMembers.clear();
-            throw std::logic_error("A group or a module cannot be a member of more than 1 groups.");
+            WeakMemberGroups.clear();
+            throw std::logic_error("A group cannot be a member of more than 1 groups.");
         }
-        this->Members = std::move(Members);
+        this->MemberGroups = std::move(MemberGroups);
+    }
+
+    bool Group::SetLoop(Loop * LoopPtr)
+    {
+        std::unique_lock<std::shared_mutex> lock(SharedMutex);
+        if (this->LoopPtr != nullptr && LoopPtr != nullptr)
+            return false;
+        auto temp = this->LoopPtr;
+        this->LoopPtr = LoopPtr;
+        for (int i = 0; i < MemberGroups.size(); i++)
+        {
+            if (!MemberGroups[i]->SetLoop(LoopPtr))
+            {
+                for (int j = 0; j < i; j++)
+                    MemberGroups[i]->SetLoop(nullptr); // Revert
+                this->LoopPtr = temp; // Revert
+                return false;
+            }
+        }
+        if (!UpdateLoop(LoopPtr))
+        {
+            this->LoopPtr = temp; // Revert
+            return false;
+        }
+        return true;
     }
 }
