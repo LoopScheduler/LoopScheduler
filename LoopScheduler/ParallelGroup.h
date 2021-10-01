@@ -28,7 +28,6 @@ namespace LoopScheduler
     {
     public:
         ParallelGroup(std::vector<ParallelGroupMember>);
-        ~ParallelGroup();
     protected:
         virtual bool RunNextModule(double MaxEstimatedExecutionTime = 0) override;
         virtual bool IsAvailable(double MaxEstimatedExecutionTime = 0) override;
