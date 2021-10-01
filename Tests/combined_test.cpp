@@ -173,20 +173,26 @@ void WorkingModule::OnRun()
 void test1()
 {
     Report report;
+
     std::vector<LoopScheduler::ParallelGroupMember> parallel_members;
     parallel_members.push_back(LoopScheduler::ParallelGroupMember(std::make_shared<IdlingTimerModule>(0.01, 0.015, 0.001, report, "Idler")));
-    for (int i = 0; i < 4; i++)
-    {
-        parallel_members.push_back(LoopScheduler::ParallelGroupMember(
-            std::make_shared<WorkingModule>(100000, 150000, report, "Worker" + std::to_string(i)), 1
-        ));
-    }
+    parallel_members.push_back(LoopScheduler::ParallelGroupMember(
+        std::make_shared<WorkingModule>(10000, 20000, report, "Worker1"), 1
+    ));
+    parallel_members.push_back(LoopScheduler::ParallelGroupMember(
+        std::make_shared<WorkingModule>(50000, 100000, report, "Worker2"), 1
+    ));
+    parallel_members.push_back(LoopScheduler::ParallelGroupMember(
+        std::make_shared<WorkingModule>(100000, 150000, report, "Worker3"), 1
+    ));
     parallel_members.push_back(LoopScheduler::ParallelGroupMember(std::make_shared<StoppingModule>(10)));
+
     std::shared_ptr<LoopScheduler::ParallelGroup> parallel_group(new LoopScheduler::ParallelGroup(parallel_members));
 
     std::vector<LoopScheduler::SequentialGroupMember> sequantial_members;
     sequantial_members.push_back(parallel_group);
     sequantial_members.push_back(std::make_shared<WorkingModule>(100000, 150000, report, "Single-threaded worker"));
+
     std::shared_ptr<LoopScheduler::SequentialGroup> sequential_group(new LoopScheduler::SequentialGroup(sequantial_members));
 
     LoopScheduler::Loop loop(sequential_group);
