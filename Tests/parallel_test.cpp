@@ -1,16 +1,16 @@
 // clang++ ../LoopScheduler/*.cpp parallel_test.cpp -o Build/parallel_test --std=c++17 -pthread && ./Build/parallel_test
 
+#include "../LoopScheduler/LoopScheduler.h"
+
 #include <chrono>
 #include <iostream>
 #include <thread>
-
-#include "../LoopScheduler/LoopScheduler.h"
 
 class WorkingModule : public LoopScheduler::Module
 {
 public:
     /// @param WorkAmount An amount of work
-    WorkingModule(int WorkAmount, double IterationsCountLimit);
+    WorkingModule(int WorkAmount, int IterationsCountLimit);
 protected:
     virtual void OnRun() override;
 private:
@@ -19,14 +19,14 @@ private:
     int IterationsCountLimit;
 };
 
-WorkingModule::WorkingModule(int WorkAmount, double IterationsCountLimit)
+WorkingModule::WorkingModule(int WorkAmount, int IterationsCountLimit)
     : WorkAmount(WorkAmount), IterationsCount(0), IterationsCountLimit(IterationsCountLimit)
 {}
 
 void WorkingModule::OnRun()
 {
     IterationsCount++;
-    if (IterationsCount > IterationsCountLimit)
+    if (IterationsCount >= IterationsCountLimit)
         GetLoop()->Stop();
     else
     {
