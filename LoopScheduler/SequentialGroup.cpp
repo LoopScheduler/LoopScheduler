@@ -153,7 +153,7 @@ namespace LoopScheduler
                 }
                 return true;
             }
-            if ((CurrentMemberIndex == Members.size() - 1)
+            if ((CurrentMemberIndex == (int)Members.size() - 1)
                 && (RunningThreadsCount == 0)) // (And no next module to run) => IsDone=true.
             {
                 return true;
@@ -170,7 +170,7 @@ namespace LoopScheduler
     bool SequentialGroup::IsDone()
     {
         std::shared_lock<std::shared_mutex> lock(MembersSharedMutex);
-        return (CurrentMemberIndex == Members.size() - 1)
+        return (CurrentMemberIndex == (int)Members.size() - 1)
                && (RunningThreadsCount == 0)
                && (
                     CurrentMemberIndex == -1
@@ -259,7 +259,7 @@ namespace LoopScheduler
     {
         // NO MUTEX LOCK
         return (RunningThreadsCount == 0)
-            && (CurrentMemberIndex < Members.size() - 1)
+            && (CurrentMemberIndex < (int)Members.size() - 1)
             && (
                 CurrentMemberIndex == -1
                 || (std::holds_alternative<std::shared_ptr<Module>>(Members[CurrentMemberIndex]) ?
