@@ -141,7 +141,7 @@ namespace LoopScheduler
                 );
                 runinfo.StartTime = std::chrono::steady_clock::now();
                 runinfo.HigherPredictedTimeSpan = m->PredictHigherExecutionTime();
-                runinfo.HigherPredictedTimeSpan = m->PredictLowerExecutionTime();
+                runinfo.LowerPredictedTimeSpan = m->PredictLowerExecutionTime();
                 lock.unlock();
                 token.Run();
             }
