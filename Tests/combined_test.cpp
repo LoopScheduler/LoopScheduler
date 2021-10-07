@@ -90,18 +90,20 @@ private:
     std::random_device random_device;
     std::default_random_engine random_engine;
     std::uniform_real_distribution<double> random_distribution;
-    double IdlingTime;
+    LoopScheduler::BiasedEMATimeSpanPredictor Predictor;
+    double IdlingTimeSlice;
     Report& ReportRef;
     std::string Name;
 };
 
-IdlingTimerModule::IdlingTimerModule(double TimeMin, double TimeMax, double IdlingTime, Report& ReportRef, std::string Name)
+IdlingTimerModule::IdlingTimerModule(double TimeMin, double TimeMax, double IdlingTimeSlice, Report& ReportRef, std::string Name)
     : random_device(),
       random_engine(random_device()),
       random_distribution(TimeMin, TimeMax),
-      IdlingTime(IdlingTime),
+      IdlingTimeSlice(IdlingTimeSlice),
       ReportRef(ReportRef),
-      Name(Name)
+      Name(Name),
+      Predictor(IdlingTimeSlice, 0.05, 0.5)
 {
 }
 void IdlingTimerModule::OnRun()
@@ -109,10 +111,14 @@ void IdlingTimerModule::OnRun()
     int report_id = ReportRef.ReportStart(Name);
     double Time = random_distribution(random_engine);
     auto start = std::chrono::steady_clock::now();
-    while (((std::chrono::duration<double>)(std::chrono::steady_clock::now() - start)).count() < Time)
+    Idle(Predictor.Predict() - IdlingTimeSlice);
+    double elapsed = ((std::chrono::duration<double>)(std::chrono::steady_clock::now() - start)).count();
+    while (elapsed < Time)
     {
-        Idle(IdlingTime);
+        Idle(IdlingTimeSlice);
+        elapsed = ((std::chrono::duration<double>)(std::chrono::steady_clock::now() - start)).count();
     }
+    Predictor.ReportObservation(elapsed);
     ReportRef.ReportStop(report_id);
 }
 
