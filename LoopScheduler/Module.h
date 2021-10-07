@@ -73,7 +73,7 @@ namespace LoopScheduler
         /// @brief Waits until it's permitted to run the module.
         ///        May give false positive (return when cannot run).
         /// @param MaxWaitingTime Maximum time to wait in seconds. No max time if 0 (default).
-        void WaitForRunAvailability(double MaxWaitingTime = 0);
+        void WaitForAvailability(double MaxWaitingTime = 0);
         /// @brief Returns the higher predicted timespan in seconds.
         ///
         /// Thread-safe

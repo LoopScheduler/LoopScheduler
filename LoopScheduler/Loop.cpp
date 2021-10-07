@@ -76,7 +76,7 @@ namespace LoopScheduler
                             guard.unlock();
                         }
 
-                        if (!Architecture->RunNextModule())
+                        if (!Architecture->RunNext())
                             Architecture->WaitForAvailability();
                     }
                 })

@@ -9,7 +9,7 @@
 
 namespace LoopScheduler
 {
-    /// @brief Represents a group of modules or other groups scheduled in a certain way.
+    /// @brief Represents a group of runnable objects or (optionally) other groups scheduled in a certain way.
     ///
     /// Group members must only be specified on construction.
     /// Derived classes have to call IntroduceMembers in the constructor.
@@ -20,16 +20,25 @@ namespace LoopScheduler
     public:
         Group();
         virtual ~Group();
-        /// @brief Thread-safe method to run the next module.
-        /// @return Whether a module was run.
-        /// @param MaxEstimatedExecutionTime No max estimated execution time if 0 (default).
-        virtual bool RunNextModule(double MaxEstimatedExecutionTime = 0) = 0;
-        /// @brief Checks whether a next module is available to run or IsDone returns true.
-        /// @param MaxEstimatedExecutionTime No max estimated execution time if 0 (default).
+        /// @brief Thread-safe method to run the next thing.
+        /// @return Whether a something was run.
+        /// @param MaxEstimatedExecutionTime In seconds. No max estimated execution time if 0 (default).
+        virtual bool RunNext(double MaxEstimatedExecutionTime = 0) = 0;
+        /// @brief Checks whether something is available to run via RunNext.
+        /// @param MaxEstimatedExecutionTime In seconds. No max estimated execution time if 0 (default).
+        virtual bool IsRunAvailable(double MaxEstimatedExecutionTime = 0) = 0;
+        /// @brief Waits until something is available to run via RunNext or nothing is available to run anymore.
+        ///        May give false positive (return when there is nothing to run).
+        ///        Should not block (keep waiting) when there's nothing left to run and IsDone returns true.
+        /// @param MaxEstimatedExecutionTime In seconds. No max estimated execution time if 0 (default).
+        /// @param MaxWaitingTime Maximum time to wait in seconds. No max time if 0 (default).
+        virtual void WaitForRunAvailability(double MaxEstimatedExecutionTime = 0, double MaxWaitingTime = 0) = 0;
+        /// @brief Checks whether something is available to run via RunNext or IsDone returns true.
+        /// @param MaxEstimatedExecutionTime In seconds. No max estimated execution time if 0 (default).
         virtual bool IsAvailable(double MaxEstimatedExecutionTime = 0) = 0;
-        /// @brief Waits until a next module is available to run or IsDone returns true.
-        ///        May give false positive (return when there is no module to run).
-        /// @param MaxEstimatedExecutionTime No max estimated execution time if 0 (default).
+        /// @brief Waits until something is available to run via RunNext or IsDone returns true.
+        ///        May give false positive (return when there is nothing to run).
+        /// @param MaxEstimatedExecutionTime In seconds. No max estimated execution time if 0 (default).
         /// @param MaxWaitingTime Maximum time to wait in seconds. No max time if 0 (default).
         virtual void WaitForAvailability(double MaxEstimatedExecutionTime = 0, double MaxWaitingTime = 0) = 0;
         /// @brief Thread-safe method to check whether the group is ready to finish the iteration.

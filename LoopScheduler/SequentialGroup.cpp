@@ -44,7 +44,7 @@ namespace LoopScheduler
         }
     };
 
-    bool SequentialGroup::RunNextModule(double MaxEstimatedExecutionTime)
+    bool SequentialGroup::RunNext(double MaxEstimatedExecutionTime)
     {
         std::unique_lock<std::shared_mutex> lock(MembersSharedMutex);
         if (ShouldIncrementCurrentMemberIndex())
@@ -82,7 +82,7 @@ namespace LoopScheduler
                 auto& member = std::get<std::shared_ptr<Group>>(Members[CurrentMemberIndex]);
                 lock.unlock();
 
-                success = member->RunNextModule(max_time);
+                success = member->RunNext(max_time);
             }
             NextEventConditionVariable.notify_all();
             return success;
@@ -90,7 +90,26 @@ namespace LoopScheduler
         return false;
     }
 
+    bool SequentialGroup::IsRunAvailable(double MaxEstimatedExecutionTime)
+    {
+        std::shared_lock<std::shared_mutex> lock(MembersSharedMutex);
+        return IsRunAvailableNoLock(MaxEstimatedExecutionTime);
+    }
     bool SequentialGroup::IsAvailable(double MaxEstimatedExecutionTime)
+    {
+        std::shared_lock<std::shared_mutex> lock(MembersSharedMutex);
+        if (IsRunAvailableNoLock(MaxEstimatedExecutionTime))
+        {
+            return true;
+        }
+        if ((CurrentMemberIndex == (int)Members.size() - 1)
+            && (RunningThreadsCount == 0)) // (And no next module to run) => IsDone=true.
+        {
+            return true;
+        }
+        return false;
+    }
+    inline bool SequentialGroup::IsRunAvailableNoLock(double MaxEstimatedExecutionTime)
     {
         if (ShouldIncrementCurrentMemberIndex()
             || ShouldRunNextModuleFromCurrentMemberIndex(MaxEstimatedExecutionTime))
@@ -100,12 +119,21 @@ namespace LoopScheduler
         if (double max_exec_time; ShouldTryRunNextGroupFromCurrentMemberIndex(MaxEstimatedExecutionTime, max_exec_time))
         {
             auto& member = std::get<std::shared_ptr<Group>>(Members[CurrentMemberIndex]);
-            return member->IsAvailable(max_exec_time);
+            return member->IsRunAvailable(max_exec_time);
         }
         return false;
     }
 
+    void SequentialGroup::WaitForRunAvailability(double MaxEstimatedExecutionTime, double MaxWaitingTime)
+    {
+        // Same because there's nothing left to do when IsDone=true.
+        WaitForAvailabilityCommon(MaxEstimatedExecutionTime, MaxWaitingTime);
+    }
     void SequentialGroup::WaitForAvailability(double MaxEstimatedExecutionTime, double MaxWaitingTime)
+    {
+        WaitForAvailabilityCommon(MaxEstimatedExecutionTime, MaxWaitingTime);
+    }
+    inline void SequentialGroup::WaitForAvailabilityCommon(double MaxEstimatedExecutionTime, double MaxWaitingTime)
     {
         std::chrono::time_point<std::chrono::steady_clock> start;
         if (MaxWaitingTime != 0)
@@ -171,7 +199,7 @@ namespace LoopScheduler
             lock.unlock();
             if (MaxWaitingTime == 0)
             {
-                member->WaitForRunAvailability();
+                member->WaitForAvailability();
             }
             else
             {
@@ -179,7 +207,7 @@ namespace LoopScheduler
                 std::chrono::duration<double> time = stop - std::chrono::steady_clock::now();
                 double t = time.count();
                 if (t > 0)
-                    member->WaitForRunAvailability(t);
+                    member->WaitForAvailability(t);
             }
             return;
         }
@@ -190,14 +218,14 @@ namespace LoopScheduler
                 return;
             lock.unlock();
             if (MaxWaitingTime == 0)
-                member->WaitForAvailability(max_exec_time);
+                member->WaitForRunAvailability(max_exec_time);
             else
             {
                 auto stop = start + std::chrono::duration<double>(MaxWaitingTime);
                 std::chrono::duration<double> time = stop - std::chrono::steady_clock::now();
                 double t = time.count();
                 if (t > 0)
-                    member->WaitForAvailability(max_exec_time, t);
+                    member->WaitForRunAvailability(max_exec_time, t);
             }
             return;
         }

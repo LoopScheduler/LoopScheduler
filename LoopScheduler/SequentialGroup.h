@@ -24,7 +24,9 @@ namespace LoopScheduler
     public:
         SequentialGroup(std::vector<SequentialGroupMember>);
     protected:
-        virtual bool RunNextModule(double MaxEstimatedExecutionTime = 0) override;
+        virtual bool RunNext(double MaxEstimatedExecutionTime = 0) override;
+        virtual bool IsRunAvailable(double MaxEstimatedExecutionTime = 0) override;
+        virtual void WaitForRunAvailability(double MaxEstimatedExecutionTime = 0, double MaxWaitingTime = 0) override;
         virtual bool IsAvailable(double MaxEstimatedExecutionTime = 0) override;
         virtual void WaitForAvailability(double MaxEstimatedExecutionTime = 0, double MaxWaitingTime = 0) override;
         virtual bool IsDone() override;
@@ -74,6 +76,10 @@ namespace LoopScheduler
         ///
         /// NO MUTEX LOCK
         inline bool ShouldIncrementCurrentMemberIndex();
+        /// NO MUTEX LOCK
+        inline bool IsRunAvailableNoLock(double MaxEstimatedExecutionTime);
+        /// LOCKS MUTEX
+        inline void WaitForAvailabilityCommon(double MaxEstimatedExecutionTime, double MaxWaitingTime);
         /// NO MUTEX LOCK
         template <bool Higher>
         inline double PredictRemainingExecutionTimeNoLock();

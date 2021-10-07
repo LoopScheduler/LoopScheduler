@@ -57,7 +57,7 @@ namespace LoopScheduler
         }
     };
 
-    bool ParallelGroup::RunNextModule(double MaxEstimatedExecutionTime)
+    bool ParallelGroup::RunNext(double MaxEstimatedExecutionTime)
     {
         std::unique_lock<std::shared_mutex> lock(MembersSharedMutex);
         for (std::list<int>::iterator i = MainQueue.begin(); i != MainQueue.end(); ++i)
@@ -111,11 +111,14 @@ namespace LoopScheduler
             else
             {
                 auto& g = std::get<std::shared_ptr<Group>>(member.Member);
-                SecondaryQueue.erase(i);
-                SecondaryQueue.push_back(*i);
-                if (RunGroup(g, lock))
+                if (g->IsRunAvailable())
                 {
-                    return true;
+                    SecondaryQueue.erase(i);
+                    SecondaryQueue.push_back(*i);
+                    if (RunGroup(g, lock))
+                    {
+                        return true;
+                    }
                 }
             }
         }
@@ -161,7 +164,7 @@ namespace LoopScheduler
                 runcounts.value, RunningThreadsCount, NotifyingCounter, lock, NextEventConditionVariable
             );
             lock.unlock();
-            success = g->RunNextModule();
+            success = g->RunNext();
         }
         lock.lock();
         if (runcounts.value == 0)
@@ -169,15 +172,20 @@ namespace LoopScheduler
         return success;
     }
 
+    bool ParallelGroup::IsRunAvailable(double MaxEstimatedExecutionTime)
+    {
+        std::shared_lock<std::shared_mutex> lock(MembersSharedMutex);
+        return IsRunAvailableNoLock(MaxEstimatedExecutionTime);
+    }
     bool ParallelGroup::IsAvailable(double MaxEstimatedExecutionTime)
     {
         std::shared_lock<std::shared_mutex> lock(MembersSharedMutex);
-        return IsAvailableNoLock(MaxEstimatedExecutionTime);
-    }
-    inline bool ParallelGroup::IsAvailableNoLock(double MaxEstimatedExecutionTime)
-    {
         if (MainQueue.size() == 0) // IsDone()
             return true;
+        return IsRunAvailableNoLock(MaxEstimatedExecutionTime);
+    }
+    inline bool ParallelGroup::IsRunAvailableNoLock(double MaxEstimatedExecutionTime)
+    {
         for (auto i : MainQueue)
         {
             if (std::holds_alternative<std::shared_ptr<Module>>(Members[i].Member))
@@ -213,7 +221,16 @@ namespace LoopScheduler
         return false;
     }
 
+    void ParallelGroup::WaitForRunAvailability(double MaxEstimatedExecutionTime, double MaxWaitingTime)
+    {
+        WaitForAvailabilityTemplate<true>(MaxEstimatedExecutionTime, MaxWaitingTime);
+    }
     void ParallelGroup::WaitForAvailability(double MaxEstimatedExecutionTime, double MaxWaitingTime)
+    {
+        WaitForAvailabilityTemplate<false>(MaxEstimatedExecutionTime, MaxWaitingTime);
+    }
+    template <bool RunAvailability>
+    inline void ParallelGroup::WaitForAvailabilityTemplate(double MaxEstimatedExecutionTime, double MaxWaitingTime)
     {
         std::chrono::time_point<std::chrono::steady_clock> start;
         if (MaxWaitingTime != 0)
@@ -225,7 +242,18 @@ namespace LoopScheduler
         if (RunningThreadsCount == 0)
             return;
 
-        if (IsAvailableNoLock(MaxEstimatedExecutionTime))
+        if constexpr (RunAvailability)
+        {
+            // IsDone() and nothing else to run.
+            if (MainQueue.size() == 0 && SecondaryQueue.size() == 0)
+                return;
+        }
+        else
+        {
+            if (MainQueue.size() == 0) // IsDone()
+                return;
+        }
+        if (IsRunAvailableNoLock(MaxEstimatedExecutionTime))
             return;
 
         lock.unlock();
