@@ -175,7 +175,7 @@ void test1()
     Report report;
 
     std::vector<LoopScheduler::ParallelGroupMember> parallel_members;
-    parallel_members.push_back(LoopScheduler::ParallelGroupMember(std::make_shared<IdlingTimerModule>(0.01, 0.015, 0.002, report, "Idler")));
+    parallel_members.push_back(LoopScheduler::ParallelGroupMember(std::make_shared<IdlingTimerModule>(0.01, 0.015, 0.005, report, "Idler")));
     parallel_members.push_back(LoopScheduler::ParallelGroupMember(
         std::make_shared<WorkingModule>(100000, 150000, report, "Worker1"), 1
     ));
