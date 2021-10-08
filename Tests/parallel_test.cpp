@@ -13,7 +13,6 @@ public:
     WorkingModule(int WorkAmount, int IterationsCountLimit);
 protected:
     virtual void OnRun() override;
-private:
     int WorkAmount;
     int IterationsCount;
     int IterationsCountLimit;
@@ -24,6 +23,29 @@ WorkingModule::WorkingModule(int WorkAmount, int IterationsCountLimit)
 {}
 
 void WorkingModule::OnRun()
+{
+    IterationsCount++;
+    for (int i = 0; i < WorkAmount; i++)
+    {
+        for (int i = 0; i < 100; i++); // Work unit
+    }
+    if (IterationsCount >= IterationsCountLimit) // Dummy
+        return;
+}
+
+class StopperWorkingModule : public WorkingModule
+{
+public:
+    StopperWorkingModule(int WorkAmount, int IterationsCountLimit);
+protected:
+    virtual void OnRun() override;
+};
+
+StopperWorkingModule::StopperWorkingModule(int WorkAmount, int IterationsCountLimit)
+    : WorkingModule(WorkAmount, IterationsCountLimit)
+{}
+
+void StopperWorkingModule::OnRun()
 {
     IterationsCount++;
     for (int i = 0; i < WorkAmount; i++)
@@ -49,12 +71,25 @@ int main()
     std::cout << "Enter the number of test repeats: ";
     std::cin >> test_repeats;
 
+    if (count < 1)
+    {
+        std::cout << "Threads/modules count can't be 0 or less.\n";
+        return 0;
+    }
+
     for (int repeat_number = 0; repeat_number < test_repeats; repeat_number++)
     {
         std::cout << "\nTest " << repeat_number << ":\n\n";
 
         std::vector<LoopScheduler::ParallelGroupMember> members;
-        for (int i = 0; i < count; i++)
+        members.push_back(
+            LoopScheduler::ParallelGroupMember(
+                std::shared_ptr<LoopScheduler::Module>(
+                    new StopperWorkingModule(work_amount, iterations_count)
+                )
+            )
+        );
+        for (int i = 1; i < count; i++)
         {
             members.push_back(
                 LoopScheduler::ParallelGroupMember(
@@ -67,7 +102,7 @@ int main()
         LoopScheduler::Loop loop(std::shared_ptr<LoopScheduler::Group>(new LoopScheduler::ParallelGroup(members)));
 
         auto start = std::chrono::steady_clock::now();
-        loop.Run();
+        loop.Run(count < std::thread::hardware_concurrency() ? count : std::thread::hardware_concurrency());
         auto stop = std::chrono::steady_clock::now();
 
         std::chrono::duration<double> loop_scheduler_duration = stop - start;
