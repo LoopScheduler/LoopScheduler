@@ -24,11 +24,10 @@ namespace LoopScheduler
     /// That means when this group is in the root,
     /// sometimes the last modules of an iteration might be running
     /// at the same time as the first modules from the next iteration.
-    class ParallelGroup final : public ModuleHoldingGroup
+    class ParallelGroup : public ModuleHoldingGroup
     {
     public:
         ParallelGroup(std::vector<ParallelGroupMember>);
-    protected:
         virtual bool RunNext(double MaxEstimatedExecutionTime = 0) override;
         virtual bool IsRunAvailable(double MaxEstimatedExecutionTime = 0) override;
         virtual void WaitForRunAvailability(double MaxEstimatedExecutionTime = 0, double MaxWaitingTime = 0) override;
@@ -38,6 +37,7 @@ namespace LoopScheduler
         virtual void StartNextIteration() override;
         virtual double PredictHigherRemainingExecutionTime() override;
         virtual double PredictLowerRemainingExecutionTime() override;
+    protected:
         virtual bool UpdateLoop(Loop*) override;
     private:
         /// @brief A shared mutex for class members.

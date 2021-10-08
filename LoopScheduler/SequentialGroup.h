@@ -19,11 +19,10 @@ namespace LoopScheduler
     /// When a stage is done, the next stage starts ignoring whether the next stage's module can run.
     /// The module or subgroup of a stage won't run in parallel with other stages.
     /// A stage is defined as a member of a vector using the constructor.
-    class SequentialGroup final : public ModuleHoldingGroup
+    class SequentialGroup : public ModuleHoldingGroup
     {
     public:
         SequentialGroup(std::vector<SequentialGroupMember>);
-    protected:
         virtual bool RunNext(double MaxEstimatedExecutionTime = 0) override;
         virtual bool IsRunAvailable(double MaxEstimatedExecutionTime = 0) override;
         virtual void WaitForRunAvailability(double MaxEstimatedExecutionTime = 0, double MaxWaitingTime = 0) override;
@@ -33,6 +32,7 @@ namespace LoopScheduler
         virtual void StartNextIteration() override;
         virtual double PredictHigherRemainingExecutionTime() override;
         virtual double PredictLowerRemainingExecutionTime() override;
+    protected:
         virtual bool UpdateLoop(Loop*) override;
     private:
         /// @brief A shared mutex for class members.
