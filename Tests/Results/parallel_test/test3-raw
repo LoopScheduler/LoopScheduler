@@ -1,0 +1,104 @@
+Enter the number of threads/modules: 8
+Enter the work amount for threads/modules on each iteration (a large number like 10000): 10000
+Enter the number of iterations: 5000
+Enter the number of test repeats: 10
+
+Test 0:
+
+LoopScheduler: Total time: 11.3799
+               Approximate iterations per second: 439.373
+
+Threads: Total time: 11.3887
+         Approximate iterations per second: 439.031
+
+Efficiency: 1.00078
+
+Test 1:
+
+LoopScheduler: Total time: 11.3646
+               Approximate iterations per second: 439.964
+
+Threads: Total time: 11.3986
+         Approximate iterations per second: 438.65
+
+Efficiency: 1.003
+
+Test 2:
+
+LoopScheduler: Total time: 11.4284
+               Approximate iterations per second: 437.506
+
+Threads: Total time: 12.0597
+         Approximate iterations per second: 414.604
+
+Efficiency: 1.05524
+
+Test 3:
+
+LoopScheduler: Total time: 11.9211
+               Approximate iterations per second: 419.425
+
+Threads: Total time: 12.1312
+         Approximate iterations per second: 412.161
+
+Efficiency: 1.01763
+
+Test 4:
+
+LoopScheduler: Total time: 12.1476
+               Approximate iterations per second: 411.603
+
+Threads: Total time: 12.4873
+         Approximate iterations per second: 400.406
+
+Efficiency: 1.02796
+
+Test 5:
+
+LoopScheduler: Total time: 12.3919
+               Approximate iterations per second: 403.491
+
+Threads: Total time: 12.514
+         Approximate iterations per second: 399.551
+
+Efficiency: 1.00986
+
+Test 6:
+
+LoopScheduler: Total time: 12.4812
+               Approximate iterations per second: 400.602
+
+Threads: Total time: 12.5968
+         Approximate iterations per second: 396.927
+
+Efficiency: 1.00926
+
+Test 7:
+
+LoopScheduler: Total time: 12.658
+               Approximate iterations per second: 395.007
+
+Threads: Total time: 12.7247
+         Approximate iterations per second: 392.938
+
+Efficiency: 1.00527
+
+Test 8:
+
+LoopScheduler: Total time: 12.6226
+               Approximate iterations per second: 396.113
+
+Threads: Total time: 12.7755
+         Approximate iterations per second: 391.373
+
+Efficiency: 1.01211
+
+Test 9:
+
+LoopScheduler: Total time: 12.6964
+               Approximate iterations per second: 393.812
+
+Threads: Total time: 12.881
+         Approximate iterations per second: 388.17
+
+Efficiency: 1.01454
