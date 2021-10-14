@@ -1,4 +1,4 @@
-// clang++ ../LoopScheduler/*.cpp parallel_test.cpp -o Build/parallel_test --std=c++17 -pthread && ./Build/parallel_test
+// clang++ ../LoopScheduler/*.cpp sequential_test.cpp -o Build/sequential_test --std=c++17 -pthread && ./Build/sequential_test
 
 #include "../LoopScheduler/LoopScheduler.h"
 
@@ -11,8 +11,8 @@ class WorkingModule : public LoopScheduler::Module
 public:
     /// @param WorkAmount An amount of work
     WorkingModule(int WorkAmount, int IterationsCountLimit);
-protected:
     virtual void OnRun() override;
+protected:
     int WorkAmount;
     int IterationsCount;
     int IterationsCountLimit;
@@ -59,10 +59,13 @@ void StopperWorkingModule::OnRun()
 int main()
 {
     int count;
+    int loop_threads_count;
     int work_amount;
     int iterations_count;
     int test_repeats;
-    std::cout << "Enter the number of threads/modules: ";
+    std::cout << "Enter the Loop's threads count: ";
+    std::cin >> loop_threads_count;
+    std::cout << "Enter the number of modules: ";
     std::cin >> count;
     std::cout << "Enter the work amount for threads/modules on each iteration (a large number like 10000): ";
     std::cin >> work_amount;
@@ -73,7 +76,7 @@ int main()
 
     if (count < 1)
     {
-        std::cout << "Threads/modules count can't be 0 or less.\n";
+        std::cout << "Modules count can't be 0 or less.\n";
         return 0;
     }
 
@@ -81,28 +84,24 @@ int main()
     {
         std::cout << "\nTest " << repeat_number << ":\n\n";
 
-        std::vector<LoopScheduler::ParallelGroupMember> members;
+        std::vector<LoopScheduler::SequentialGroupMember> members;
         members.push_back(
-            LoopScheduler::ParallelGroupMember(
-                std::shared_ptr<LoopScheduler::Module>(
-                    new StopperWorkingModule(work_amount, iterations_count)
-                )
+            std::shared_ptr<LoopScheduler::Module>(
+                new StopperWorkingModule(work_amount, iterations_count)
             )
         );
         for (int i = 1; i < count; i++)
         {
             members.push_back(
-                LoopScheduler::ParallelGroupMember(
-                    std::shared_ptr<LoopScheduler::Module>(
-                        new WorkingModule(work_amount, iterations_count)
-                    )
+                std::shared_ptr<LoopScheduler::Module>(
+                    new WorkingModule(work_amount, iterations_count)
                 )
             );
         }
-        LoopScheduler::Loop loop(std::shared_ptr<LoopScheduler::Group>(new LoopScheduler::ParallelGroup(members)));
+        LoopScheduler::Loop loop(std::shared_ptr<LoopScheduler::Group>(new LoopScheduler::SequentialGroup(members)));
 
         auto start = std::chrono::steady_clock::now();
-        loop.Run(count < std::thread::hardware_concurrency() ? count : std::thread::hardware_concurrency());
+        loop.Run(loop_threads_count);
         auto stop = std::chrono::steady_clock::now();
 
         std::chrono::duration<double> loop_scheduler_duration = stop - start;
@@ -111,31 +110,23 @@ int main()
         std::cout << "               Approximate iterations per second: "
                   << iterations_count / loop_scheduler_duration.count() << "\n\n";
 
-        start = std::chrono::steady_clock::now();
-        std::vector<std::thread> threads;
+        std::vector<std::shared_ptr<WorkingModule>> modules;
         for (int i = 0; i < count; i++)
         {
-            threads.push_back(
-                std::thread([work_amount, iterations_count] {
-                    int WorkAmount = work_amount;
-                    int IterationsCount = 0;
-                    int IterationsCountLimit = iterations_count;
-                    while (true)
-                    {
-                        IterationsCount++;
-                        for (int i = 0; i < WorkAmount; i++)
-                        {
-                            for (int i = 0; i < 100; i++); // Work unit
-                        }
-                        if (IterationsCount >= IterationsCountLimit)
-                            return;
-                    }
-                })
+            modules.push_back(
+                std::shared_ptr<WorkingModule>(
+                    new WorkingModule(work_amount, iterations_count)
+                )
             );
         }
-        for (auto& thread : threads)
+
+        start = std::chrono::steady_clock::now();
+        for (int i = 0; i < iterations_count; i++)
         {
-            thread.join();
+            for (int j = 0; j < count; j++)
+            {
+                modules[j]->OnRun();
+            }
         }
         stop = std::chrono::steady_clock::now();
 
