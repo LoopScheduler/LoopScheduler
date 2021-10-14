@@ -1,4 +1,5 @@
 // clang++ ../LoopScheduler/*.cpp parallel_test.cpp -o Build/parallel_test --std=c++17 -pthread && ./Build/parallel_test
+// Evaluates running only parallel modules.
 
 #include "../LoopScheduler/LoopScheduler.h"
 

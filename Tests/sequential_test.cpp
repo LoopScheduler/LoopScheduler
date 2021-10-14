@@ -1,4 +1,5 @@
 // clang++ ../LoopScheduler/*.cpp sequential_test.cpp -o Build/sequential_test --std=c++17 -pthread && ./Build/sequential_test
+// Evaluates running only single-threaded modules.
 
 #include "../LoopScheduler/LoopScheduler.h"
 
