@@ -1,0 +1,89 @@
+-------- Test 1 --------
+
+Population: 100
+
+Enter the Loop's threads count: 4
+Enter the number of modules: 10
+Enter the work amount for threads/modules on each iteration (a large number like 10000): 10000
+Enter the number of iterations: 100
+Enter the number of test repeats: 100
+
+LoopScheduler: Total time: Mean: 1.7323484
+                           Median: 1.7302650000000002
+                           STDev: 0.006242034393828453
+
+               Approximate iterations per second: Mean: 57.725827
+                                                  Median: 57.7947
+                                                  STDev: 0.20639483288448426
+
+Plain loop: Total time: Mean: 1.7240747
+                        Median: 1.72261
+                        STDev: 0.004997582133574006
+
+            Approximate iterations per second: Mean: 58.002615
+                                               Median: 58.051500000000004
+                                               STDev: 0.16703259427580278
+
+Efficiency: Mean: 0.99523499
+            Median: 0.995876
+            STDev: 0.004287052149346003
+
+-------- Test 2 --------
+
+Population: 10
+
+Enter the Loop's threads count: 4
+Enter the number of modules: 10
+Enter the work amount for threads/modules on each iteration (a large number like 10000): 10000
+Enter the number of iterations: 1000
+Enter the number of test repeats: 10
+
+LoopScheduler: Total time: Mean: 17.30185
+                           Median: 17.296599999999998
+                           STDev: 0.032217119327739456
+
+               Approximate iterations per second: Mean: 57.797470000000004
+                                                  Median: 57.8148
+                                                  STDev: 0.10740493522697782
+
+Plain loop: Total time: Mean: 17.23409
+                        Median: 17.2309
+                        STDev: 0.02649689499629102
+
+            Approximate iterations per second: Mean: 58.024680000000004
+                                               Median: 58.03535
+                                               STDev: 0.08913859121864344
+
+Efficiency: Mean: 0.9960873
+            Median: 0.9955535
+            STDev: 0.002586593300076358
+
+-------- Test 3 --------
+
+Population: 10
+
+Enter the Loop's threads count: 4
+Enter the number of modules: 5
+Enter the work amount for threads/modules on each iteration (a large number like 10000): 10000
+Enter the number of iterations: 200
+Enter the number of test repeats: 10
+
+LoopScheduler: Total time: Mean: 1.7338689999999999
+                           Median: 1.7302499999999998
+                           STDev: 0.010774753877055022
+
+               Approximate iterations per second: Mean: 115.3531
+                                                  Median: 115.59049999999999
+                                                  STDev: 0.708838400326741
+
+Plain loop: Total time: Mean: 1.7242089999999999
+                        Median: 1.72275
+                        STDev: 0.005684676185442169
+
+            Approximate iterations per second: Mean: 115.9964
+                                               Median: 116.0935
+                                               STDev: 0.3798862987789917
+
+Efficiency: Mean: 0.9944696
+            Median: 0.9966135
+            STDev: 0.00767224119363654
