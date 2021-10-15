@@ -4,7 +4,7 @@ Population: 100
 
 Enter the Loop's threads count: 4
 Enter the number of modules: 10
-Enter the work amount for threads/modules on each iteration (a large number like 10000): 10000
+Enter the work amount for modules on each iteration (a large number like 10000): 10000
 Enter the number of iterations: 100
 Enter the number of test repeats: 100
 
@@ -34,7 +34,7 @@ Population: 10
 
 Enter the Loop's threads count: 4
 Enter the number of modules: 10
-Enter the work amount for threads/modules on each iteration (a large number like 10000): 10000
+Enter the work amount for modules on each iteration (a large number like 10000): 10000
 Enter the number of iterations: 1000
 Enter the number of test repeats: 10
 
@@ -64,7 +64,7 @@ Population: 10
 
 Enter the Loop's threads count: 4
 Enter the number of modules: 5
-Enter the work amount for threads/modules on each iteration (a large number like 10000): 10000
+Enter the work amount for modules on each iteration (a large number like 10000): 10000
 Enter the number of iterations: 200
 Enter the number of test repeats: 10
 

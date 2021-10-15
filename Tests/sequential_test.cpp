@@ -68,7 +68,7 @@ int main()
     std::cin >> loop_threads_count;
     std::cout << "Enter the number of modules: ";
     std::cin >> count;
-    std::cout << "Enter the work amount for threads/modules on each iteration (a large number like 10000): ";
+    std::cout << "Enter the work amount for modules on each iteration (a large number like 10000): ";
     std::cin >> work_amount;
     std::cout << "Enter the number of iterations: ";
     std::cin >> iterations_count;
