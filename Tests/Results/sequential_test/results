@@ -1,3 +1,9 @@
+Specs:
+    - CPU: Intel® Core™ i5-8250U, 4 Cores, 8 Threads, 1.60-3.40 GHz, 6MB Cache
+    - RAM: 16 GB DDR4 2400MHz
+    - OS: Arch Linux, 5.14.6-arch1-1
+    - DE: GNOME 40.4.0 on Wayland
+
 -------- Test 1 --------
 
 Population: 100
