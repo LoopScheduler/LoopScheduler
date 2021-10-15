@@ -133,8 +133,8 @@ int main()
 
         std::chrono::duration<double> threads_duration = stop - start;
 
-        std::cout << "Threads: Total time: " << threads_duration.count() << '\n';
-        std::cout << "         Approximate iterations per second: "
+        std::cout << "Plain loop: Total time: " << threads_duration.count() << '\n';
+        std::cout << "            Approximate iterations per second: "
                   << iterations_count / threads_duration.count() << "\n\n";
         std::cout << "Efficiency: " << threads_duration.count() / loop_scheduler_duration.count() << '\n';
     }
