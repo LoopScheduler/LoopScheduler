@@ -26,7 +26,11 @@ updates and rendering, and also separately run game updates that need more
 frequent updates more frequently, versus those that need less [@valente_2005].
 The goal of this work is to utilize CPU usage and make the loop architecture
 customizable by breaking different parts of the loop to modules and running them
-in a multi-threaded loop.
+in a multi-threaded loop. A limited number of threads are used to run all the
+tasks, because the order of execution in a game loop iteration is not important.
+Using a limited number of threads has the benefit of reducing context switch
+times. Also, modules that run in a game loop are usually predictable, therefore
+timespan predictors are used for scheduling.
 
 # Statement of need
 
@@ -78,8 +82,8 @@ In \autoref{fig:combined_example} the architecture (root) `Group` is a
 `ParallelGroup` containing an Idler module and 5 simple modules. Idler idles for
 a random timespan between 10-15ms which can represent a module that waits for
 the GPU to complete its current task. The 5 simple modules do work with
-different ranges of work amounts. \autoref{fig:combined_example} is based on real
-data of running a `Loop` with such a configuration. We can see that
+different ranges of work amounts. \autoref{fig:combined_example} is based on
+real data of running a `Loop` with such a configuration. We can see that
 `SequentialGroup` makes use of the spare time by running other modules that take
 short enough time to run, from the member `ParallelGroup`. This is enabled by
 predicting the timespans for modules based on history. The timespan predictor
@@ -91,10 +95,11 @@ currently used predictor isn't designed for such processors.
 
 LoopScheduler is evaluated in 2 configurations, one having a `SequentialGroup`
 and the other having a `ParallelGroup` as the architecture. The tests are done
-on a computer with Intel® Core™ i5-8250U CPU and 16 GB DDR4 2400MHz RAM running
-Linux. The `ParallelGroup` performance running n modules is compared to n
-threads running the same code. The `SequentialGroup` performance is compared to
-a for loop calling the same run method from the modules.
+on a computer with Intel® Core™ i5-8250U CPU with 4 cores and 8 threads, and
+16 GB DDR4 2400MHz RAM, running Linux. The `ParallelGroup` performance running n
+modules is compared to n threads running the same code. The `SequentialGroup`
+performance is compared to a for loop calling the same run method from the
+modules.
 
 Number of modules / threads | Efficiency mean | Efficiency median
 -- | -- | --
