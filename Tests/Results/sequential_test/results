@@ -3,6 +3,7 @@ Specs:
     - RAM: 16 GB DDR4 2400MHz
     - OS: Arch Linux, 5.14.6-arch1-1
     - DE: GNOME 40.4.0 on Wayland
+    - Compiler: clang version 12.0.1
 
 -------- Test 1 --------
 
