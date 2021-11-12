@@ -35,7 +35,7 @@ timespan predictors are used for scheduling.
 # Statement of need
 
 LoopScheduler is a general and flexible framework to apply a loop architecture,
-that is, how modules get executed in a loop. The benefit of such a framework is
+that is, how modules get executed in a loop. The benefit of this framework is
 that the scheduling of the tasks in the loop is not hard coded while using the
 CPU efficiently. One of the problems that most games have is that modules run by
 the CPU are bound to GPU tasks, this can introduce an input or feedback latency,
@@ -83,7 +83,7 @@ In \autoref{fig:combined_example} the architecture (root) `Group` is a
 a random timespan between 10-15ms which can represent a module that waits for
 the GPU to complete its current task. The 5 simple modules do work with
 different ranges of work amounts. \autoref{fig:combined_example} is based on
-real data of running a `Loop` with such a configuration. We can see that
+real data of running a `Loop` with the described configuration. We can see that
 `SequentialGroup` makes use of the spare time by running other modules that take
 short enough time to run, from the member `ParallelGroup`. This is enabled by
 predicting the timespans for modules based on history. The timespan predictor

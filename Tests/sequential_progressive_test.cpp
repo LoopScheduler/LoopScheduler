@@ -63,19 +63,19 @@ int main()
     int loop_threads_count;
     int work_amount;
     int work_amount_step;
-    int iterations_count;
+    int total_work_amount;
     int test_repeats;
     int test_module_repeats;
     std::cout << "Enter the Loop's threads count: ";
     std::cin >> loop_threads_count;
     std::cout << "Enter the number of modules: ";
     std::cin >> count;
-    std::cout << "Enter the starting work amount for modules on each iteration (a large number like 10000): ";
+    std::cout << "Enter the starting work amount for modules on each iteration: ";
     std::cin >> work_amount;
     std::cout << "Enter the step for work amount changes for modules on each iteration: ";
     std::cin >> work_amount_step;
-    std::cout << "Enter the number of iterations: ";
-    std::cin >> iterations_count;
+    std::cout << "Enter the total work amount for a single module to calculate the number of iterations on each test: ";
+    std::cin >> total_work_amount;
     std::cout << "Enter the number of test repeats, work amount will be updated on each repeat: ";
     std::cin >> test_repeats;
     std::cout << "Enter the number of repeats for the test module used to estimate the work amount time: ";
@@ -87,10 +87,17 @@ int main()
         return 0;
     }
 
-    std::cout << "\nwork_amount,avg_work_amount_time,efficiency,loopscheduler_iterations_per_second,simple_loop_iterations_per_second\n";
+    std::cout << "\nwork_amount,"
+              << "iterations_count,"
+              << "avg_work_amount_time,"
+              << "loopscheduler_time,simple_loop_time,"
+              << "efficiency,"
+              << "loopscheduler_iterations_per_second,simple_loop_iterations_per_second\n";
 
     for (int repeat_number = 0; repeat_number < test_repeats; repeat_number++)
     {
+        int iterations_count = total_work_amount / work_amount;
+
         // Test LoopScheduler
 
         std::vector<LoopScheduler::SequentialGroupMember> members;
@@ -154,7 +161,10 @@ int main()
         double test_module_time_avg = test_module_time_sum / test_module_repeats;
 
         std::cout << work_amount << ',' // work_amount
+                  << iterations_count << ',' // iterations_count
                   << test_module_time_avg << ',' // avg_work_amount_time
+                  << loop_scheduler_duration.count() << ',' // loopscheduler_time
+                  << simple_loop_duration.count() << ',' // simple_loop_time
                   << simple_loop_duration.count() / loop_scheduler_duration.count() << ',' // efficiency
                   << iterations_count / loop_scheduler_duration.count() << ',' // loopscheduler_iterations_per_second
                   << iterations_count / simple_loop_duration.count() << '\n'; // simple_loop_iterations_per_second
