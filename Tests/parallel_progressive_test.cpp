@@ -61,6 +61,7 @@ void StopperWorkingModule::OnRun()
 int main()
 {
     int count;
+    bool limited_threads = false;
     int work_amount;
     int work_amount_step;
     int total_work_amount;
@@ -68,6 +69,11 @@ int main()
     int test_module_repeats;
     std::cout << "Enter the number of threads/modules: ";
     std::cin >> count;
+    if (count > std::thread::hardware_concurrency() && count % std::thread::hardware_concurrency() == 0)
+    {
+        std::cout << "The number of modules is higher than hardware concurrency, run them sequentially in the threads? (0: no, 1: yes): ";
+        std::cin >> limited_threads;
+    }
     std::cout << "Enter the starting work amount for threads/modules on each iteration: ";
     std::cin >> work_amount;
     std::cout << "Enter the step for work amount changes for threads/modules on each iteration: ";
@@ -126,33 +132,68 @@ int main()
 
         // Test threads
 
-        start = std::chrono::steady_clock::now();
-        std::vector<std::thread> threads;
-        for (int i = 0; i < count; i++)
+        if (limited_threads)
         {
-            threads.push_back(
-                std::thread([work_amount, iterations_count] {
-                    int WorkAmount = work_amount;
-                    int IterationsCount = 0;
-                    int IterationsCountLimit = iterations_count;
-                    while (true)
-                    {
-                        IterationsCount++;
-                        for (int i = 0; i < WorkAmount; i++)
+            std::vector<std::shared_ptr<WorkingModule>> modules;
+            for (int i = 0; i < count; i++)
+                modules.push_back(
+                    std::shared_ptr<WorkingModule>(
+                        new WorkingModule(work_amount, iterations_count)
+                    )
+                );
+            start = std::chrono::steady_clock::now();
+            std::vector<std::thread> threads;
+            for (int i = 0; i < std::thread::hardware_concurrency(); i++)
+            {
+                threads.push_back(
+                    std::thread([work_amount, iterations_count, i, &modules] {
+                        int WorkAmount = work_amount;
+                        int IterationsCount = 0;
+                        int IterationsCountLimit = iterations_count;
+                        int start = (modules.size() / std::thread::hardware_concurrency()) * i;
+                        int stop = (modules.size() / std::thread::hardware_concurrency()) * (i + 1);
+                        for (int j = 0; j < iterations_count; j++)
+                            for (int k = start; k < stop; k++)
+                                modules[k]->OnRun();
+                    })
+                );
+            }
+            for (auto& thread : threads)
+            {
+                thread.join();
+            }
+            stop = std::chrono::steady_clock::now();
+        }
+        else
+        {
+            start = std::chrono::steady_clock::now();
+            std::vector<std::thread> threads;
+            for (int i = 0; i < count; i++)
+            {
+                threads.push_back(
+                    std::thread([work_amount, iterations_count] {
+                        int WorkAmount = work_amount;
+                        int IterationsCount = 0;
+                        int IterationsCountLimit = iterations_count;
+                        while (true)
                         {
-                            for (int i = 0; i < 100; i++); // Work unit
+                            IterationsCount++;
+                            for (int i = 0; i < WorkAmount; i++)
+                            {
+                                for (int i = 0; i < 100; i++); // Work unit
+                            }
+                            if (IterationsCount >= IterationsCountLimit)
+                                return;
                         }
-                        if (IterationsCount >= IterationsCountLimit)
-                            return;
-                    }
-                })
-            );
+                    })
+                );
+            }
+            for (auto& thread : threads)
+            {
+                thread.join();
+            }
+            stop = std::chrono::steady_clock::now();
         }
-        for (auto& thread : threads)
-        {
-            thread.join();
-        }
-        stop = std::chrono::steady_clock::now();
 
         std::chrono::duration<double> threads_duration = stop - start;
 
