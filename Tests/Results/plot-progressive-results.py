@@ -12,6 +12,7 @@ python plot-progressive-results.py sequential_progressive_test/test-1-2 "Sequent
 
 import io
 import matplotlib.pyplot
+import os
 import pandas
 import sys
 
@@ -27,6 +28,16 @@ elif len(sys.argv) == 4:
 else:
     print("arguments: <filename> [<title>] [<efficiency_y_label>]")
     exit()
+
+i = filename.rfind('/')
+if i == -1:
+    image_filename = "fig/" + filename
+    if not os.path.exists("fig/"):
+        os.makedirs("fig/")
+else:
+    image_filename = filename[:i] + "/fig" + filename[i:]
+    if not os.path.exists(filename[:i] + "/fig"):
+        os.makedirs(filename[:i] + "/fig")
 
 file = open(filename)
 text = file.read()
@@ -50,7 +61,7 @@ matplotlib.pyplot.legend(loc="lower right")
 matplotlib.pyplot.grid(True)
 fig = matplotlib.pyplot.gcf()
 matplotlib.pyplot.show()
-fig.savefig(filename + "-a.png")
+fig.savefig(image_filename + "-a.png")
 
 temp = data[data["loopscheduler_iterations_per_second"] <= 200]
 if len(temp) == 0:
@@ -69,4 +80,4 @@ matplotlib.pyplot.legend(loc="upper right")
 matplotlib.pyplot.grid(True)
 fig = matplotlib.pyplot.gcf()
 matplotlib.pyplot.show()
-fig.savefig(filename + "-b.png")
+fig.savefig(image_filename + "-b.png")
