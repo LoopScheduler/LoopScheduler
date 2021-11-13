@@ -26,7 +26,7 @@ elif len(sys.argv) == 4:
     title = sys.argv[2]
     efficiency_y_label = sys.argv[3]
 else:
-    print("arguments: <filename> [<title>] [<efficiency_y_label>]")
+    print("arguments: <filename> <title> [<efficiency_y_label>]")
     exit()
 
 i = filename.rfind('/')
