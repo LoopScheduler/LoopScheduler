@@ -3,6 +3,7 @@
 """
 python plot-progressive-results.py parallel_progressive_test/test-2 "ParallelGroup in 2 threads with 2 modules vs 2 threads"
 python plot-progressive-results.py parallel_progressive_test/test-4 "ParallelGroup in 4 threads with 4 modules vs 4 threads"
+python plot-progressive-results.py parallel_progressive_test/test-8 "ParallelGroup in 8 threads with 8 modules vs 8 threads"
 python plot-progressive-results.py parallel_progressive_test/test-80-0 "ParallelGroup with 80 modules vs 80 threads" "Threads time / LoopScheduler time"
 python plot-progressive-results.py parallel_progressive_test/test-80-1 "ParallelGroup with 80 modules vs 8 threads running 80 modules"
 python plot-progressive-results.py sequential_progressive_test/test-4-2 "SequentialGroup in 4 threads vs simple loop"
