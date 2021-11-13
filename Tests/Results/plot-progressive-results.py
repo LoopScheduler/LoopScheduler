@@ -1,11 +1,13 @@
 # Used to plot progressive test results.
 
-# python plot-progressive-results.py parallel_progressive_test/test-2 "ParallelGroup in 2 threads with 2 modules vs 2 threads"
-# python plot-progressive-results.py parallel_progressive_test/test-4 "ParallelGroup in 4 threads with 4 modules vs 4 threads"
-# python plot-progressive-results.py parallel_progressive_test/test-80-0 "ParallelGroup with 80 modules vs 80 threads" "Threads time / LoopScheduler time"
-# python plot-progressive-results.py parallel_progressive_test/test-80-1 "ParallelGroup with 80 modules vs 8 threads running 80 modules"
-# python plot-progressive-results.py sequential_progressive_test/test-4-2 "SequentialGroup in 4 threads vs simple loop"
-# python plot-progressive-results.py sequential_progressive_test/test-1-2 "SequentialGroup in 1 thread vs simple loop"
+"""
+python plot-progressive-results.py parallel_progressive_test/test-2 "ParallelGroup in 2 threads with 2 modules vs 2 threads"
+python plot-progressive-results.py parallel_progressive_test/test-4 "ParallelGroup in 4 threads with 4 modules vs 4 threads"
+python plot-progressive-results.py parallel_progressive_test/test-80-0 "ParallelGroup with 80 modules vs 80 threads" "Threads time / LoopScheduler time"
+python plot-progressive-results.py parallel_progressive_test/test-80-1 "ParallelGroup with 80 modules vs 8 threads running 80 modules"
+python plot-progressive-results.py sequential_progressive_test/test-4-2 "SequentialGroup in 4 threads vs simple loop"
+python plot-progressive-results.py sequential_progressive_test/test-1-2 "SequentialGroup in 1 thread vs simple loop"
+"""
 
 import io
 import matplotlib.pyplot
@@ -54,11 +56,11 @@ if len(temp) == 0:
     temp = data[data["work_amount"] >= 2000]
 data = temp
 
-matplotlib.pyplot.plot(data["avg_work_amount_time"], data["loopscheduler_iterations_per_second"], label="LoopScheduler", color='#f08', marker='.', linestyle="")
+matplotlib.pyplot.plot(data["processed_avg_work_amount_time"], data["loopscheduler_iterations_per_second"], label="LoopScheduler", color='#f08', marker='.', linestyle="")
 if "threads_iterations_per_second" in data:
-    matplotlib.pyplot.plot(data["avg_work_amount_time"], data["threads_iterations_per_second"], label="Threads", color='#0d8', marker='.', linestyle="")
+    matplotlib.pyplot.plot(data["processed_avg_work_amount_time"], data["threads_iterations_per_second"], label="Threads", color='#0d8', marker='.', linestyle="")
 elif "simple_loop_iterations_per_second" in data:
-    matplotlib.pyplot.plot(data["avg_work_amount_time"], data["simple_loop_iterations_per_second"], label="Simple loop", color='#0d8', marker='.', linestyle="")
+    matplotlib.pyplot.plot(data["processed_avg_work_amount_time"], data["simple_loop_iterations_per_second"], label="Simple loop", color='#0d8', marker='.', linestyle="")
 matplotlib.pyplot.xlabel("Work amount average time (s)")
 matplotlib.pyplot.ylabel("Iterations per second")
 matplotlib.pyplot.title(title)
