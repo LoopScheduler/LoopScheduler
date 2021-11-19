@@ -1,13 +1,13 @@
-# Used to plot progressive test results.
+# Used to plot evaulation results.
 
 """
-python plot-progressive-results.py parallel_progressive_test/test-2 "ParallelGroup in 2 threads with 2 modules vs 2 threads"
-python plot-progressive-results.py parallel_progressive_test/test-4 "ParallelGroup in 4 threads with 4 modules vs 4 threads"
-python plot-progressive-results.py parallel_progressive_test/test-8 "ParallelGroup in 8 threads with 8 modules vs 8 threads"
-python plot-progressive-results.py parallel_progressive_test/test-80-0 "ParallelGroup with 80 modules vs 80 threads" "Threads time / LoopScheduler time"
-python plot-progressive-results.py parallel_progressive_test/test-80-1 "ParallelGroup with 80 modules vs 8 threads running 80 modules"
-python plot-progressive-results.py sequential_progressive_test/test-4-2 "SequentialGroup in 4 threads vs simple loop"
-python plot-progressive-results.py sequential_progressive_test/test-1-2 "SequentialGroup in 1 thread vs simple loop"
+python plot-evaulation-results.py parallel_evaluation/test-2 "ParallelGroup in 2 threads with 2 modules vs 2 threads"
+python plot-evaulation-results.py parallel_evaluation/test-4 "ParallelGroup in 4 threads with 4 modules vs 4 threads"
+python plot-evaulation-results.py parallel_evaluation/test-8 "ParallelGroup in 8 threads with 8 modules vs 8 threads"
+python plot-evaulation-results.py parallel_evaluation/test-80-0 "ParallelGroup with 80 modules vs 80 threads" "Threads time / LoopScheduler time"
+python plot-evaulation-results.py parallel_evaluation/test-80-1 "ParallelGroup with 80 modules vs 8 threads running 80 modules"
+python plot-evaulation-results.py sequential_evaluation/test-4-2 "SequentialGroup in 4 threads vs simple loop"
+python plot-evaulation-results.py sequential_evaluation/test-1-2 "SequentialGroup in 1 thread vs simple loop"
 """
 
 import io
