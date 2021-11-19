@@ -7,52 +7,54 @@
 #include <iostream>
 #include <thread>
 
+void WorkUnit()
+{
+    for (int i = 0; i < 100; i++);
+}
+
+void Work(int WorkAmount)
+{
+    for (int i = 0; i < WorkAmount; i++)
+        WorkUnit();
+}
+
 class WorkingModule : public LoopScheduler::Module
 {
 public:
-    /// @param WorkAmount An amount of work
-    WorkingModule(int WorkAmount, int IterationsCountLimit);
-    virtual void OnRun() override;
+    WorkingModule(int WorkAmount);
 protected:
+    virtual void OnRun() override;
     int WorkAmount;
-    int IterationsCount;
-    int IterationsCountLimit;
 };
 
-WorkingModule::WorkingModule(int WorkAmount, int IterationsCountLimit)
-    : WorkAmount(WorkAmount), IterationsCount(0), IterationsCountLimit(IterationsCountLimit)
+WorkingModule::WorkingModule(int WorkAmount)
+    : WorkAmount(WorkAmount)
 {}
 
 void WorkingModule::OnRun()
 {
-    IterationsCount++;
-    for (int i = 0; i < WorkAmount; i++)
-    {
-        for (int i = 0; i < 100; i++); // Work unit
-    }
-    if (IterationsCount >= IterationsCountLimit) // Dummy
-        return;
+    Work(WorkAmount);
 }
 
-class StopperWorkingModule : public WorkingModule
+class StopperWorkingModule : public LoopScheduler::Module
 {
 public:
     StopperWorkingModule(int WorkAmount, int IterationsCountLimit);
 protected:
     virtual void OnRun() override;
+    int WorkAmount;
+    int IterationsCount;
+    int IterationsCountLimit;
 };
 
 StopperWorkingModule::StopperWorkingModule(int WorkAmount, int IterationsCountLimit)
-    : WorkingModule(WorkAmount, IterationsCountLimit)
+    : WorkAmount(WorkAmount), IterationsCount(0), IterationsCountLimit(IterationsCountLimit)
 {}
 
 void StopperWorkingModule::OnRun()
 {
     IterationsCount++;
-    for (int i = 0; i < WorkAmount; i++)
-    {
-        for (int i = 0; i < 100; i++); // Work unit
-    }
+    Work(WorkAmount);
     if (IterationsCount >= IterationsCountLimit) // Will stop after this iteration
         GetLoop()->Stop();
 }
@@ -110,7 +112,7 @@ int main()
         {
             members.push_back(
                 std::shared_ptr<LoopScheduler::Module>(
-                    new WorkingModule(work_amount, iterations_count)
+                    new WorkingModule(work_amount)
                 )
             );
         }
@@ -124,22 +126,12 @@ int main()
 
         // Test simple loop
 
-        std::vector<std::shared_ptr<WorkingModule>> modules;
-        for (int i = 0; i < count; i++)
-        {
-            modules.push_back(
-                std::shared_ptr<WorkingModule>(
-                    new WorkingModule(work_amount, iterations_count)
-                )
-            );
-        }
-
         start = std::chrono::steady_clock::now();
         for (int i = 0; i < iterations_count; i++)
         {
             for (int j = 0; j < count; j++)
             {
-                modules[j]->OnRun();
+                Work(work_amount);
             }
         }
         stop = std::chrono::steady_clock::now();
@@ -148,12 +140,11 @@ int main()
 
         // Estimate work amount time
 
-        auto test_module = WorkingModule(work_amount, test_module_repeats);
         double test_module_time_sum = 0;
         for (int i = 0; i < test_module_repeats; i++)
         {
             start = std::chrono::steady_clock::now();
-            test_module.OnRun();
+            Work(work_amount);
             stop = std::chrono::steady_clock::now();
             std::chrono::duration<double> duration = stop - start;
             test_module_time_sum += duration.count();
