@@ -1,6 +1,6 @@
 #include "ModuleHoldingGroup.h"
 
-#include <exception>
+#include <stdexcept>
 #include <utility>
 
 #include "Module.h"

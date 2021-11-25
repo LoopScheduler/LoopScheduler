@@ -1,6 +1,7 @@
 // clang++ thread_join.cpp -o Build/thread_join -pthread && ./Build/thread_join
 
 #include <chrono>
+#include <exception>
 #include <iostream>
 #include <thread>
 

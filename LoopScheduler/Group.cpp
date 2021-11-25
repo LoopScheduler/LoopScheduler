@@ -1,9 +1,9 @@
 #include "Group.h"
 
-#include <exception>
 #include <list>
 #include <map>
 #include <mutex>
+#include <stdexcept>
 #include <utility>
 
 #include "Module.h"

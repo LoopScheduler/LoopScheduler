@@ -1,9 +1,9 @@
 #include "Loop.h"
 
-#include <exception>
 #include <list>
 #include <map>
 #include <queue>
+#include <stdexcept>
 #include <thread>
 
 #include "Group.h"
