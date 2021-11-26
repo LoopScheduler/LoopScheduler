@@ -44,7 +44,7 @@ more tasks can be done in the spare time while the GPU task or any other time
 consuming task is working. The other benefit of using LoopScheduler is that it
 enables customizable game engines. This framework also takes into acount the
 history of timespans to predict them and schedule more efficiently. Some game
-loop architectures have been proposed to utilize the CPU and GPU [@zamith_2009, @zamith_2008, @joselli_2010].
+loop architectures have been proposed to utilize the CPU and GPU [@zamith_2009], [@zamith_2008], [@joselli_2010].
 However, LoopScheduler is a simple and general framework to realize suitable
 loop architectures, offering simplicity, customizability and extensibility.
 
