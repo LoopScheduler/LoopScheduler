@@ -75,7 +75,7 @@ loop iterations, or other groups with other scheduling methods could be
 implemented. For simplicity, only `SequentialGroup` and `ParallelGroup` are
 designed and implemented.
 
-![An example of 7 modules running in 2 groups.\label{fig:combined_example}](Tests/Results/combined_test/test1-example-figure.svg)
+![An example of 7 modules running in 2 groups.\label{fig:combined_example}](Tests/Results/combined_test/test1-example-figure.png)
 
 In \autoref{fig:combined_example} the architecture (root) `Group` is a
 `SequentialGroup` that contains a module shown in gray with an S letter and a
