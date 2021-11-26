@@ -7,7 +7,7 @@ python plot-evaluation-results.py parallel_evaluation/test-4-slow "ParallelGroup
 python plot-evaluation-results.py parallel_evaluation/test-8-fast "ParallelGroup in 8 threads with 8 modules vs 8 threads"
 python plot-evaluation-results.py parallel_evaluation/test-8-slow "ParallelGroup in 8 threads with 8 modules vs 8 threads"
 python plot-evaluation-results.py parallel_evaluation/test-80-0 "ParallelGroup with 80 modules vs 80 threads" "Threads time / LoopScheduler time"
-python plot-evaluation-results.py parallel_evaluation/test-80-1 "ParallelGroup with 80 modules vs 8 threads running 80 modules"
+python plot-evaluation-results.py parallel_evaluation/test-80-1 "ParallelGroup with 80 modules vs 8 threads running 80 modules" "Threads time / LoopScheduler time"
 python plot-evaluation-results.py sequential_evaluation/test-4-2 "SequentialGroup in 4 threads vs simple loop"
 python plot-evaluation-results.py sequential_evaluation/test-1-2 "SequentialGroup in 1 thread vs simple loop"
 """
@@ -53,6 +53,8 @@ t_s = data["avg_work_amount_time"][0]
 t_e = data["avg_work_amount_time"][len(data["avg_work_amount_time"])-1]
 t_d = (t_e - t_s) / (len(data["avg_work_amount_time"])-1)
 data["processed_avg_work_amount_time"] = [t_s + i * t_d for i in range(len(data["avg_work_amount_time"]))]
+
+data = data[data["efficiency"] >= 0.9]
 
 matplotlib.pyplot.plot(data["processed_avg_work_amount_time"], data["efficiency"], '.')
 matplotlib.pyplot.plot(data["processed_avg_work_amount_time"], data["efficiency_ma"], '-', label="Moving average")
