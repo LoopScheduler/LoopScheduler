@@ -28,9 +28,9 @@ The goal of this work is to utilize CPU usage and make the loop architecture
 customizable by breaking different parts of the loop to modules and running them
 in a multi-threaded loop. A limited number of threads are used to run all the
 tasks, because the order of execution in a game loop iteration is not important.
-Using a limited number of threads has the benefit of reducing context switch
-times. Also, modules that run in a game loop are usually predictable, therefore
-timespan predictors are used for scheduling.
+Using a limited number of threads has the benefit of reducing scheduling
+overhead. Also, modules that run in a game loop are usually predictable,
+therefore timespan predictors are used for scheduling.
 
 # Statement of need
 
@@ -41,12 +41,14 @@ CPU efficiently. One of the problems that most games have is that modules run by
 the CPU are bound to GPU tasks, this can introduce an input or feedback latency,
 or audio problems on a system without a high-end GPU. To utilize the CPU more,
 more tasks can be done in the spare time while the GPU task or any other time
-consuming task is working. The other benefit of using LoopScheduler is that it
-enables customizable game engines. This framework also takes into acount the
-history of timespans to predict them and schedule more efficiently. Some game
-loop architectures have been proposed to utilize the CPU and GPU [@zamith_2009], [@zamith_2008], [@joselli_2010].
+consuming task is working, which improves the responsiveness. The other benefit
+of using LoopScheduler is that it enables customizable game engines. This
+framework also takes into acount the history of timespans to predict them and
+schedule more efficiently. Some game loop architectures have been proposed to
+utilize the CPU and GPU [@zamith_2009], [@zamith_2008], [@joselli_2010].
 However, LoopScheduler is a simple and general framework to realize suitable
-loop architectures, offering simplicity, customizability and extensibility.
+loop architectures, offering simplicity, customizability and extensibility. What
+architecture to use depends on the game's needs and components.
 
 # Approach
 
@@ -96,23 +98,23 @@ currently used predictor isn't designed for such processors.
 LoopScheduler is evaluated in 2 configurations, one having a `SequentialGroup`
 and the other having a `ParallelGroup` as the architecture. The tests are done
 on a computer with Intel® Core™ i5-8250U CPU with 4 cores and 8 threads, and
-16 GB DDR4 2400MHz RAM, running Linux. The `ParallelGroup` performance running n
-modules is compared to n threads running the same code. The `SequentialGroup`
-performance is compared to a for loop calling the same run method from the
-modules.
+16 GB DDR4 2400MHz RAM, running Linux. The evaluation code is compiled using
+Clang version 12.0.1 with no optimization. The `ParallelGroup` performance
+running n modules is compared to n threads calling the same function with no
+synchronization between them while running, and only the final joins. The
+`SequentialGroup` performance is compared to a for loop calling the same
+function. The efficiency is calculated by dividing the comparing code's
+execution time by LoopScheduler's time.
 
-Number of modules / threads | Efficiency mean | Efficiency median
--- | -- | --
-1 | 0.9967115 | 0.9972455
-4 | 1.0084727 | 1.0058600000000002
-8 | 1.015565 | 1.010985
-80 | 1.127201 | 1.12544
+![ParallelGroup in 4 threads with 4 modules vs 4 threads.\label{fig:parallel_evaluation_4}](Tests/Results/parallel_evaluation/fig/test-4-slow-no-title.png)
+![ParallelGroup in 8 threads with 8 modules vs 8 threads.\label{fig:parallel_evaluation_8}](Tests/Results/parallel_evaluation/fig/test-8-slow-no-title.png)
+![ParallelGroup with 80 modules vs 80 threads.\label{fig:parallel_evaluation_80}](Tests/Results/parallel_evaluation/fig/test-80-0-no-title.png)
+![SequentialGroup in 4 threads vs simple loop, both running 2 modules per iteration.\label{fig:sequential_evaluation_4_2}](Tests/Results/sequential_evaluation/fig/test-4-2-no-title.png)
 
-: Parallel test results. The efficiency is calculated by comparing LoopScheduler times with simple threads, that is simple threads time divided by LoopScheduler's time. The efficiency for module numbers of more than 1 are more than 1 which can be caused by an eventual time difference between the threads versus the scheduling done in LoopScheduler. Therefore, we can consider only the single module vs single thread efficiency. The reason for the higher efficiency at 80 modules is that LoopScheduler uses 8 threads to run all of them versus 80 threads. Iterations per second for the single module test has been 500+. All the tests have been repeated 10 times.\label{tbl:parallel_test}
-
-The sequential test has been repeated 100 times, with the resulting efficiency
-mean of 0.99523499 and median of 0.995876, that is less than 0.3 frames per
-second loss from 60, however the benefit should outweigh the small performance
-loss.
+\autoref{fig:parallel_evaluation_80} shows that the times are competitive with
+many modules running in parallel. The iterations per second are close to game
+framerates in this particular configuration. In other cases, the efficiencies
+are below 1 and usually more than 0.99 and close to 0.995, and usually more
+than 0.995 in \autoref{fig:parallel_evaluation_8}.
 
 # References

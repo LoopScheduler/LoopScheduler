@@ -87,8 +87,10 @@ matplotlib.pyplot.ylabel("Iterations per second")
 matplotlib.pyplot.legend(loc="upper right")
 matplotlib.pyplot.grid(True)
 
+matplotlib.pyplot.gcf().savefig(image_filename + "-no-title.png")
+
 matplotlib.pyplot.suptitle(title)
 
-fig = matplotlib.pyplot.gcf()
-matplotlib.pyplot.show()
-fig.savefig(image_filename + ".png")
+matplotlib.pyplot.gcf().savefig(image_filename + ".png")
+
+#matplotlib.pyplot.show()
