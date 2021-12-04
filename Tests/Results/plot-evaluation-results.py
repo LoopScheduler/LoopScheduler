@@ -7,7 +7,8 @@ python plot-evaluation-results.py parallel_evaluation/test-4-slow "ParallelGroup
 python plot-evaluation-results.py parallel_evaluation/test-8-fast "ParallelGroup in 8 threads with 8 modules vs 8 threads"
 python plot-evaluation-results.py parallel_evaluation/test-8-slow "ParallelGroup in 8 threads with 8 modules vs 8 threads"
 python plot-evaluation-results.py parallel_evaluation/test-80-0 "ParallelGroup with 80 modules vs 80 threads" "Threads time / LoopScheduler time"
-python plot-evaluation-results.py parallel_evaluation/test-80-1 "ParallelGroup with 80 modules vs 8 threads running 80 modules" "Threads time / LoopScheduler time"
+python plot-evaluation-results.py parallel_evaluation/test-80-1-fast "ParallelGroup with 80 modules vs 8 threads running 80 modules" "Threads time / LoopScheduler time"
+python plot-evaluation-results.py parallel_evaluation/test-80-1-slow "ParallelGroup with 80 modules vs 8 threads running 80 modules" "Threads time / LoopScheduler time"
 python plot-evaluation-results.py sequential_evaluation/test-4-2 "SequentialGroup in 4 threads vs simple loop"
 python plot-evaluation-results.py sequential_evaluation/test-1-2 "SequentialGroup in 1 thread vs simple loop"
 """
@@ -56,16 +57,20 @@ data["processed_avg_work_amount_time"] = [t_s + i * t_d for i in range(len(data[
 
 data = data[data["efficiency"] >= 0.9]
 
+matplotlib.pyplot.figure(figsize=(13,5))
+
+matplotlib.pyplot.subplot(1, 2, 1)
+
+matplotlib.pyplot.tick_params()
+
 matplotlib.pyplot.plot(data["processed_avg_work_amount_time"], data["efficiency"], '.')
 matplotlib.pyplot.plot(data["processed_avg_work_amount_time"], data["efficiency_ma"], '-', label="Moving average")
 matplotlib.pyplot.xlabel("Work amount average time in seconds")
 matplotlib.pyplot.ylabel(efficiency_y_label)
-matplotlib.pyplot.title(title)
 matplotlib.pyplot.legend(loc="lower right")
 matplotlib.pyplot.grid(True)
-fig = matplotlib.pyplot.gcf()
-matplotlib.pyplot.show()
-fig.savefig(image_filename + "-a.png")
+
+matplotlib.pyplot.subplot(1, 2, 2)
 
 temp = data[data["loopscheduler_iterations_per_second"] <= 200]
 if len(temp) == 0:
@@ -79,9 +84,11 @@ elif "simple_loop_iterations_per_second" in data:
     matplotlib.pyplot.plot(data["processed_avg_work_amount_time"], data["simple_loop_iterations_per_second"], label="Simple loop", color='#0d8', marker='.', linestyle="")
 matplotlib.pyplot.xlabel("Work amount average time (s)")
 matplotlib.pyplot.ylabel("Iterations per second")
-matplotlib.pyplot.title(title)
 matplotlib.pyplot.legend(loc="upper right")
 matplotlib.pyplot.grid(True)
+
+matplotlib.pyplot.suptitle(title)
+
 fig = matplotlib.pyplot.gcf()
 matplotlib.pyplot.show()
-fig.savefig(image_filename + "-b.png")
+fig.savefig(image_filename + ".png")
