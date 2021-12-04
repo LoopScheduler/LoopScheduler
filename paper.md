@@ -107,8 +107,11 @@ function. The efficiency is calculated by dividing the comparing code's
 execution time by LoopScheduler's time.
 
 ![ParallelGroup in 4 threads with 4 modules vs 4 threads.\label{fig:parallel_evaluation_4}](Tests/Results/parallel_evaluation/fig/test-4-slow-no-title.png)
+
 ![ParallelGroup in 8 threads with 8 modules vs 8 threads.\label{fig:parallel_evaluation_8}](Tests/Results/parallel_evaluation/fig/test-8-slow-no-title.png)
+
 ![ParallelGroup with 80 modules vs 80 threads.\label{fig:parallel_evaluation_80}](Tests/Results/parallel_evaluation/fig/test-80-0-no-title.png)
+
 ![SequentialGroup in 4 threads vs simple loop, both running 2 modules per iteration.\label{fig:sequential_evaluation_4_2}](Tests/Results/sequential_evaluation/fig/test-4-2-no-title.png)
 
 \autoref{fig:parallel_evaluation_80} shows that the times are competitive with
