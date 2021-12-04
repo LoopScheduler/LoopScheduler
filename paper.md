@@ -115,9 +115,9 @@ execution time by LoopScheduler's time.
 ![SequentialGroup in 4 threads vs simple loop, both running 2 modules per iteration.\label{fig:sequential_evaluation_4_2}](Tests/Results/sequential_evaluation/fig/test-4-2-no-title.png)
 
 \autoref{fig:parallel_evaluation_80} shows that the times are competitive with
-many modules running in parallel. The iterations per second are close to game
+many modules running in parallel. The iteration rates are close to game
 framerates in this particular configuration. In other cases, the efficiencies
-are below 1 and usually more than 0.99 and close to 0.995, and usually more
-than 0.995 in \autoref{fig:parallel_evaluation_8}.
+are below 1, mostly more than 0.99 and close to 0.995, and mostly more than
+0.995 in \autoref{fig:parallel_evaluation_8}.
 
 # References
