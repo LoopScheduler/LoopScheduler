@@ -102,14 +102,16 @@ namespace LoopScheduler
                 auto& g = std::get<std::shared_ptr<Group>>(member.Member);
                 if (g->IsDone())
                 {
-                    MainQueue.erase(i);
                     for (int j = 0; j < member.RunSharesAfterFirstRun; j++)
                         SecondaryQueue.push_back(*i);
+                    MainQueue.erase(i);
                 }
                 else if (RunGroup(g, lock))
                 {
                     return true;
                 }
+                // The list might be changed by other RunNext calls.
+                return false;
             }
         }
         for (std::list<int>::iterator i = SecondaryQueue.begin(); i != SecondaryQueue.end(); ++i)
@@ -133,12 +135,14 @@ namespace LoopScheduler
                 auto& g = std::get<std::shared_ptr<Group>>(member.Member);
                 if (g->IsRunAvailable())
                 {
-                    SecondaryQueue.erase(i);
                     SecondaryQueue.push_back(*i);
+                    SecondaryQueue.erase(i);
                     if (RunGroup(g, lock))
                     {
                         return true;
                     }
+                    // The list might be changed by other RunNext calls.
+                    return false;
                 }
             }
         }
@@ -154,9 +158,9 @@ namespace LoopScheduler
         auto token = m->GetRunningToken();
         if (token.CanRun())
         {
-            from_list.erase(item_to_move);
             for (int j = 0; j < move_to_to_list_count; j++)
                 to_list.push_back(*item_to_move);
+            from_list.erase(item_to_move);
             auto& runinfo = ModulesRunCountsAndPredictedStopTimes[m];
             {
                 DoubleIncrementGuardLockingAndCountingOnDecrement increment_guard(
