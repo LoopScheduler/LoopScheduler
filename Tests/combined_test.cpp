@@ -201,11 +201,11 @@ void test1()
 
     std::shared_ptr<LoopScheduler::ParallelGroup> parallel_group(new LoopScheduler::ParallelGroup(parallel_members));
 
-    std::vector<LoopScheduler::SequentialGroupMember> sequantial_members;
-    sequantial_members.push_back(parallel_group);
-    sequantial_members.push_back(std::make_shared<WorkingModule>(100000, 150000, report, "Single-threaded worker"));
+    std::vector<LoopScheduler::SequentialGroupMember> sequential_members;
+    sequential_members.push_back(parallel_group);
+    sequential_members.push_back(std::make_shared<WorkingModule>(100000, 150000, report, "Single-threaded worker"));
 
-    std::shared_ptr<LoopScheduler::SequentialGroup> sequential_group(new LoopScheduler::SequentialGroup(sequantial_members));
+    std::shared_ptr<LoopScheduler::SequentialGroup> sequential_group(new LoopScheduler::SequentialGroup(sequential_members));
 
     LoopScheduler::Loop loop(sequential_group);
     loop.Run(4);
@@ -213,8 +213,168 @@ void test1()
     std::cout << report.GetReport();
 }
 
+std::string prompt_name(std::map<std::string, std::shared_ptr<LoopScheduler::Group>>& groups)
+{
+    std::string name;
+    while (true)
+    {
+        std::cin >> name;
+        if (groups.contains(name))
+            std::cout << "Another group already has this name. Try another name: ";
+        else if (name == "stopper" || name == "worker" || name == "idler" || name == "done")
+            std::cout << "This name is reserved. Try another name: ";
+        else
+            break;
+    }
+    return name;
+}
+std::variant<std::variant<std::shared_ptr<LoopScheduler::Group>, std::shared_ptr<LoopScheduler::Module>>, int> prompt_member(
+        Report& report,
+        std::map<std::string, std::shared_ptr<LoopScheduler::Group>>& groups
+    )
+{
+    while (true)
+    {
+        std::string input;
+        std::cout << "Enter one of the following words to add that type of module:\n";
+        std::cout << "  stopper: StoppingModule\n";
+        std::cout << "  worker: WorkingModule\n";
+        std::cout << "  idler: IdlingTimerModule\n";
+        std::cout << "Or enter a group name to include that as a member, 'done' to stop: ";
+        std::cin >> input;
+        if (input == "done")
+        {
+            return 0;
+        }
+        if (input == "stopper")
+        {
+            int count;
+            std::cout << "Enter the run count limit for the StoppingModule: ";
+            std::cin >> count;
+            return std::make_shared<StoppingModule>(count);
+        }
+        if (input == "worker")
+        {
+            int min_work;
+            int max_work;
+            std::string name;
+            std::cout << "Enter the minimum work amount for the WorkingModule: ";
+            std::cin >> min_work;
+            std::cout << "Enter the maximum work amount for the WorkingModule: ";
+            std::cin >> max_work;
+            std::cout << "Enter a name for this module. This name will appear in the report: ";
+            std::cin >> name;
+            return std::make_shared<WorkingModule>(min_work, max_work, report, name);
+        }
+        if (input == "idler")
+        {
+            double min_time;
+            double max_time;
+            double idling_time_slice;
+            std::string name;
+            std::cout << "Enter the minimum time in seconds for the IdlingTimerModule: ";
+            std::cin >> min_time;
+            std::cout << "Enter the maximum time in seconds for the IdlingTimerModule: ";
+            std::cin >> max_time;
+            std::cout << "This module tries to predict the time and idle for the lower predicted time.\n";
+            std::cout << "After that, it idles at time slices and checks whether it's done waiting.\n";
+            std::cout << "Enter the idling time slice in seconds for the IdlingTimerModule: ";
+            std::cin >> idling_time_slice;
+            std::cout << "Enter a name for this module. This name will appear in the report: ";
+            std::cin >> name;
+            return std::make_shared<IdlingTimerModule>(min_time, max_time, idling_time_slice, report, name);
+        }
+        if (groups.contains(input))
+        {
+            return groups[input];
+        }
+        std::cout << "Invalid input.\n";
+    }
+}
+void test_custom()
+{
+    Report report;
+
+    std::string input;
+    std::map<std::string, std::shared_ptr<LoopScheduler::Group>> groups;
+    while (true)
+    {
+        std::cout << "Enter 'parallel' to create a ParallelGroup, or 'sequential' to create a SequentialGroup, 'done' to stop: ";
+        std::cin >> input;
+        if (input == "parallel")
+        {
+            std::cout << "Enter a name for the new ParallelGroup: ";
+            std::string name = prompt_name(groups);
+            std::cout << "Adding members to " << name << ". Do not forget to add 1 StoppingModule to the loop.\n";
+            std::vector<LoopScheduler::ParallelGroupMember> parallel_members;
+            while (true)
+            {
+                auto member = prompt_member(report, groups);
+                if (std::holds_alternative<int>(member))
+                    break;
+                int run_shares_after_first_run;
+                std::cout << "Enter the extra run shares after the first run for this member (0: once per iteration): ";
+                std::cin >> run_shares_after_first_run;
+                parallel_members.push_back(LoopScheduler::ParallelGroupMember(std::get<0>(member), run_shares_after_first_run));
+            }
+            groups[name] = std::shared_ptr<LoopScheduler::ParallelGroup>(new LoopScheduler::ParallelGroup(parallel_members));
+        }
+        else if (input == "sequential")
+        {
+            std::cout << "Enter a name for the new SequentialGroup: ";
+            std::string name = prompt_name(groups);
+            std::cout << "Adding members to " << name << ". Do not forget to add 1 StoppingModule to the loop.\n";
+            std::vector<LoopScheduler::SequentialGroupMember> sequential_members;
+            while (true)
+            {
+                auto member = prompt_member(report, groups);
+                if (std::holds_alternative<int>(member))
+                    break;
+                sequential_members.push_back(LoopScheduler::SequentialGroupMember(std::get<0>(member)));
+            }
+            groups[name] = std::shared_ptr<LoopScheduler::SequentialGroup>(new LoopScheduler::SequentialGroup(sequential_members));
+        }
+        else if (input == "done")
+        {
+            break;
+        }
+        else
+        {
+            std::cout << "Invalid input.\n";
+        }
+    }
+    if (groups.size() == 0)
+    {
+        std::cout << "No groups were created.\n";
+        return;
+    }
+
+    while (true)
+    {
+        std::cout << "Enter the name of the group to use as the architecture (root): ";
+        std::cin >> input;
+        if (groups.contains(input))
+            break;
+        std::cout << "A group with that name is not defined.\n";
+    }
+    LoopScheduler::Loop loop(groups[input]);
+    std::cout << "Enter the number of threads for the loop: ";
+    int threads_count;
+    std::cin >> threads_count;
+    std::cout << "\nRunning...\n";
+    loop.Run(threads_count);
+
+    std::cout << report.GetReport();
+}
+
 int main()
 {
-    test1();
+    std::cout << "Enter 1 to run test1, enter c to create and run a custom test: ";
+    std::string input_char;
+    std::cin >> input_char;
+    if (input_char == "1")
+        test1();
+    else if (input_char == "c")
+        test_custom();
     return 0;
 }
