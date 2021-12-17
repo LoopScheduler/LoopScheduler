@@ -3,10 +3,12 @@
 #include "../LoopScheduler/LoopScheduler.h"
 
 #include <chrono>
+#include <exception>
 #include <iostream>
 #include <map>
 #include <mutex>
 #include <random>
+#include <stdexcept>
 #include <string>
 #include <thread>
 #include <vector>
@@ -146,7 +148,7 @@ void StoppingModule::OnRun()
 class WorkingModule : public LoopScheduler::Module
 {
 public:
-    WorkingModule(int WorkAmountMin, int WorkAmountMax, Report& ReportRef, std::string Name);
+    WorkingModule(int WorkAmountMin, int WorkAmountMax, Report& ReportRef, std::string Name, bool CanRunInParallel = false);
 protected:
     virtual void OnRun() override;
 private:
@@ -157,12 +159,13 @@ private:
     std::string Name;
 };
 
-WorkingModule::WorkingModule(int WorkAmountMin, int WorkAmountMax, Report& ReportRef, std::string Name)
+WorkingModule::WorkingModule(int WorkAmountMin, int WorkAmountMax, Report& ReportRef, std::string Name, bool CanRunInParallel)
     : random_device(),
       random_engine(random_device()),
       random_distribution(WorkAmountMin, WorkAmountMax),
       ReportRef(ReportRef),
-      Name(Name)
+      Name(Name),
+      Module(CanRunInParallel)
 {
 }
 void WorkingModule::OnRun()
@@ -213,6 +216,102 @@ void test1()
     std::cout << report.GetReport();
 }
 
+void test2()
+{
+    Report report;
+    std::vector<LoopScheduler::ParallelGroupMember> parallel_members;
+    parallel_members.push_back(LoopScheduler::ParallelGroupMember(
+        std::make_shared<WorkingModule>(100000, 150000, report, "Worker")
+    ));
+    try
+    {
+        std::shared_ptr<LoopScheduler::ParallelGroup> parallel_group(new LoopScheduler::ParallelGroup(parallel_members));
+        std::cout << "Test 1-1 passed.\n";
+    }
+    catch (std::exception& e)
+    {
+        std::cout << "Test 1-1 failed. Exception message: ";
+        std::cout << e.what() << '\n';
+    }
+    std::shared_ptr<LoopScheduler::ParallelGroup> parallel_group1;
+    try
+    {
+        parallel_group1 = std::shared_ptr<LoopScheduler::ParallelGroup>(new LoopScheduler::ParallelGroup(parallel_members));
+        std::cout << "Test 1-2 passed.\n";
+    }
+    catch (std::exception& e)
+    {
+        std::cout << "Test 1-2 failed. Exception message: ";
+        std::cout << e.what() << '\n';
+    }
+    try
+    {
+        std::shared_ptr<LoopScheduler::ParallelGroup> parallel_group(new LoopScheduler::ParallelGroup(parallel_members));
+        std::cout << "Test 1-3 faild.\n";
+    }
+    catch(std::logic_error& e)
+    {
+        if (e.what() == std::string("A module cannot be a member of more than 1 groups."))
+            std::cout << "Test 1-3 passed.\n";
+        else
+        {
+            std::cout << "Test 1-3 failed. Logic error message: ";
+            std::cout << e.what() << '\n';
+        }
+    }
+    catch (std::exception& e)
+    {
+        std::cout << "Test 1-3 failed. Exception message: ";
+        std::cout << e.what() << '\n';
+    }
+
+    std::vector<LoopScheduler::SequentialGroupMember> sequential_members;
+    sequential_members.push_back(
+        std::make_shared<WorkingModule>(100000, 150000, report, "Worker")
+    );
+    try
+    {
+        std::shared_ptr<LoopScheduler::SequentialGroup> sequential_group(new LoopScheduler::SequentialGroup(sequential_members));
+        std::cout << "Test 2-1 passed.\n";
+    }
+    catch (std::exception& e)
+    {
+        std::cout << "Test 2-1 failed. Exception message: ";
+        std::cout << e.what() << '\n';
+    }
+    std::shared_ptr<LoopScheduler::SequentialGroup> sequential_group1;
+    try
+    {
+        sequential_group1 = std::shared_ptr<LoopScheduler::SequentialGroup>(new LoopScheduler::SequentialGroup(sequential_members));
+        std::cout << "Test 2-2 passed.\n";
+    }
+    catch (std::exception& e)
+    {
+        std::cout << "Test 2-2 failed. Exception message: ";
+        std::cout << e.what() << '\n';
+    }
+    try
+    {
+        std::shared_ptr<LoopScheduler::SequentialGroup> sequential_group(new LoopScheduler::SequentialGroup(sequential_members));
+        std::cout << "Test 2-3 faild.\n";
+    }
+    catch(std::logic_error& e)
+    {
+        if (e.what() == std::string("A module cannot be a member of more than 1 groups."))
+            std::cout << "Test 2-3 passed.\n";
+        else
+        {
+            std::cout << "Test 2-3 failed. Logic error message: ";
+            std::cout << e.what() << '\n';
+        }
+    }
+    catch (std::exception& e)
+    {
+        std::cout << "Test 2-3 failed. Exception message: ";
+        std::cout << e.what() << '\n';
+    }
+}
+
 std::string prompt_name(std::map<std::string, std::shared_ptr<LoopScheduler::Group>>& groups)
 {
     std::string name;
@@ -221,7 +320,7 @@ std::string prompt_name(std::map<std::string, std::shared_ptr<LoopScheduler::Gro
         std::cin >> name;
         if (groups.contains(name))
             std::cout << "Another group already has this name. Try another name: ";
-        else if (name == "stopper" || name == "worker" || name == "idler" || name == "done")
+        else if (name == "stopper" || name == "worker" || name == "aworker" || name == "idler" || name == "done")
             std::cout << "This name is reserved. Try another name: ";
         else
             break;
@@ -239,6 +338,7 @@ std::variant<std::variant<std::shared_ptr<LoopScheduler::Group>, std::shared_ptr
         std::cout << "Enter one of the following words to add that type of module:\n";
         std::cout << "  stopper: StoppingModule\n";
         std::cout << "  worker: WorkingModule\n";
+        std::cout << "  aworker: WorkingModule with CanRunInParallel=true\n";
         std::cout << "  idler: IdlingTimerModule\n";
         std::cout << "Or enter a group name to include that as a member, 'done' to stop: ";
         std::cin >> input;
@@ -253,7 +353,7 @@ std::variant<std::variant<std::shared_ptr<LoopScheduler::Group>, std::shared_ptr
             std::cin >> count;
             return std::make_shared<StoppingModule>(count);
         }
-        if (input == "worker")
+        if (input == "worker" || input == "aworker")
         {
             int min_work;
             int max_work;
@@ -264,7 +364,8 @@ std::variant<std::variant<std::shared_ptr<LoopScheduler::Group>, std::shared_ptr
             std::cin >> max_work;
             std::cout << "Enter a name for this module. This name will appear in the report: ";
             std::cin >> name;
-            return std::make_shared<WorkingModule>(min_work, max_work, report, name);
+            bool can_run_in_parallel = input[0] == 'a';
+            return std::make_shared<WorkingModule>(min_work, max_work, report, name, can_run_in_parallel);
         }
         if (input == "idler")
         {
@@ -369,12 +470,17 @@ void test_custom()
 
 int main()
 {
-    std::cout << "Enter 1 to run test1, enter c to create and run a custom test: ";
-    std::string input_char;
-    std::cin >> input_char;
-    if (input_char == "1")
+    std::cout << "1: Run test1. A test to showcase some features.\n";
+    std::cout << "2: Run test2. Tests whether adding 1 module to 2 groups throws an exception.\n";
+    std::cout << "c: Create and run a custom test.\n";
+    std::cout << "Enter 1, 2, or c: ";
+    std::string input;
+    std::cin >> input;
+    if (input == "1")
         test1();
-    else if (input_char == "c")
+    else if (input == "2")
+        test2();
+    else if (input == "c")
         test_custom();
     return 0;
 }
