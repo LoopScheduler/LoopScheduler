@@ -1,0 +1,35 @@
+Description:
+
+ParallelGroup p:
+    Stopper
+    Worker worker
+    AWorker* aworker
+
+*: Can run more than once per iteration
+AWorker: Worker with CanRunInParallel=true
+
+Expected behavior:
+The aworker can run in parallel.
+
+Input:
+
+c
+parallel
+p
+stopper
+100
+0
+worker
+100000
+150000
+worker
+0
+aworker
+100000
+150000
+aworker
+1
+done
+done
+p
+4

@@ -1,0 +1,21 @@
+Description:
+
+A ParallelGroup added to 2 SequentialGroups.
+
+Expected behavior:
+Exception! This is not allowed.
+
+Input:
+
+c
+parallel
+p
+done
+sequential
+s1
+p
+done
+sequential
+s2
+p
+done

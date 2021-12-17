@@ -1,0 +1,64 @@
+Description:
+
+ParallelGroup p:
+    Idler idler
+    SequentialGroup s*:
+        Worker ws1
+        Worker ws2
+    Stopper
+    Worker wp1*
+    Worker wp2*
+    Worker wp3
+
+*: Can run more than once per iteration
+
+Expected behavior:
+The SequentialGroup's workers are fast, but they're not run multiple times per iteration,
+because SequentialGroup doesn't support that.
+
+Input:
+
+c
+sequential
+s
+worker
+10000
+20000
+ws1
+worker
+10000
+20000
+ws2
+done
+parallel
+p
+idler
+0.05
+0.05
+0.01
+idler
+1
+s
+1
+stopper
+100
+0
+worker
+100000
+150000
+wp1
+1
+worker
+100000
+150000
+wp2
+1
+worker
+100000
+150000
+wp3
+0
+done
+done
+p
+4
