@@ -69,6 +69,7 @@ namespace LoopScheduler
         std::list<int> SecondaryQueue;
         int RunningThreadsCount;
         int NotifyingCounter;
+        int RunNextCount;
 
         class integer // 0 by default
         {

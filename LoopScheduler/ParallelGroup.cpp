@@ -80,14 +80,19 @@ namespace LoopScheduler
     bool ParallelGroup::RunNext(double MaxEstimatedExecutionTime)
     {
         std::unique_lock<std::shared_mutex> lock(MembersSharedMutex);
-        for (std::list<int>::iterator i = MainQueue.begin(); i != MainQueue.end(); ++i)
+        int this_run_next_count = ++RunNextCount;
+
+        for (std::list<int>::iterator i = MainQueue.begin(); i != MainQueue.end();)
         {
             auto& member = Members[*i];
             if (std::holds_alternative<std::shared_ptr<Module>>(member.Member))
             {
                 auto& m = std::get<std::shared_ptr<Module>>(member.Member);
                 if (MaxEstimatedExecutionTime != 0 && m->PredictHigherExecutionTime() > MaxEstimatedExecutionTime)
+                {
+                    ++i;
                     continue;
+                }
                 if (RunModule(m, lock, MainQueue, SecondaryQueue, i, member.RunSharesAfterFirstRun))
                 {
                     // Done in RunModule before running:
@@ -104,24 +109,33 @@ namespace LoopScheduler
                 {
                     for (int j = 0; j < member.RunSharesAfterFirstRun; j++)
                         SecondaryQueue.push_back(*i);
-                    MainQueue.erase(i);
+                    MainQueue.erase(i++);
+                    continue; // Incremented already
                 }
-                else if (RunGroup(g, lock))
+                else if (g->IsRunAvailable())
                 {
-                    return true;
+                    if (RunGroup(g, lock))
+                    {
+                        return true;
+                    }
+                    // The list might be changed by other RunNext calls.
+                    if (this_run_next_count != RunNextCount)
+                        return false;
                 }
-                // The list might be changed by other RunNext calls.
-                return false;
             }
+            ++i;
         }
-        for (std::list<int>::iterator i = SecondaryQueue.begin(); i != SecondaryQueue.end(); ++i)
+        for (std::list<int>::iterator i = SecondaryQueue.begin(); i != SecondaryQueue.end();)
         {
             auto& member = Members[*i];
             if (std::holds_alternative<std::shared_ptr<Module>>(member.Member))
             {
                 auto& m = std::get<std::shared_ptr<Module>>(member.Member);
                 if (MaxEstimatedExecutionTime != 0 && m->PredictHigherExecutionTime() > MaxEstimatedExecutionTime)
+                {
+                    ++i;
                     continue;
+                }
                 if (RunModule(m, lock, SecondaryQueue, SecondaryQueue, i, 1))
                 {
                     // Done in RunModule before running:
@@ -136,15 +150,18 @@ namespace LoopScheduler
                 if (g->IsRunAvailable())
                 {
                     SecondaryQueue.push_back(*i);
-                    SecondaryQueue.erase(i);
+                    SecondaryQueue.erase(i++);
                     if (RunGroup(g, lock))
                     {
                         return true;
                     }
                     // The list might be changed by other RunNext calls.
-                    return false;
+                    if (this_run_next_count != RunNextCount)
+                        return false;
+                    continue; // Incremented already
                 }
             }
+            ++i;
         }
         return false;
     }
