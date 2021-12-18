@@ -27,62 +27,30 @@ SequentialGroup waits to start the next iteration.
 Input:
 
 c
-parallel
-p1
-worker
-100000
-150000
-wp11
+parallel p1
+worker wp11 100000 150000
 1
-worker
-100000
-150000
-wp12
+worker wp12 100000 150000
 1
 done
-sequential
-s
-worker
-100000
-150000
-ws1
-worker
-100000
-150000
-ws2
+sequential s
+worker ws1 100000 150000
+worker ws2 100000 150000
 done
-parallel
-p2
-worker
-400000
-500000
-wp2long
+parallel p2
+worker wp2long 400000 500000
 1
-worker
-100000
-150000
-wp21
+worker wp21 100000 150000
 1
-worker
-100000
-150000
-wp22
+worker wp22 100000 150000
 1
 done
-sequential
-r
+sequential r
 p1
 s
-worker
-100000
-150000
-wr1
-worker
-100000
-150000
-wr2
-stopper
-50
+worker wr1 100000 150000
+worker wr2 100000 150000
+stopper 50
 p2
 done
 done

@@ -14,20 +14,12 @@ The aworker can run in parallel.
 Input:
 
 c
-parallel
-p
-stopper
-100
+parallel p
+stopper 100
 0
-worker
-100000
-150000
-worker
+worker worker 100000 150000
 0
-aworker
-100000
-150000
-aworker
+aworker aworker 100000 150000
 1
 done
 done

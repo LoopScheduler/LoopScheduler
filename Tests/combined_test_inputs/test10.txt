@@ -22,48 +22,24 @@ because workers are used, not of aworkers.
 Input:
 
 c
-parallel
-p
-worker
-25000
-25000
-w3
+parallel p
+worker w3 25000 25000
 1
-worker
-25000
-25000
-w4
+worker w4 25000 25000
 1
-worker
-25000
-25000
-w5
+worker w5 25000 25000
 1
-worker
-25000
-25000
-w6
+worker w6 25000 25000
 1
 done
-parallel
-r
-stopper
-10
+parallel r
+stopper 10
 0
-worker
-200000
-200000
-wlong
+worker wlong 200000 200000
 0
-worker
-25000
-25000
-w1
+worker w1 25000 25000
 1
-worker
-25000
-25000
-w2
+worker w2 25000 25000
 1
 p
 1

@@ -8,16 +8,11 @@ Exception! This is not allowed.
 Input:
 
 c
-sequential
-s
+sequential s
 done
-parallel
-p1
-s
-0
+parallel p1
+s 0
 done
-parallel
-p2
-s
-0
+parallel p2
+s 0
 done

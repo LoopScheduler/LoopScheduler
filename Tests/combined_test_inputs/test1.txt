@@ -20,54 +20,26 @@ ws2 can only run after ws1, and the idler thread should be used by other workers
 Input:
 
 c
-sequential
-s
-worker
-100000
-150000
-ws1
-worker
-100000
-150000
-ws2
+sequential s
+worker ws1 100000 150000
+worker ws2 100000 150000
 done
-parallel
-p
-idler
-0.05
-0.05
-0.01
-idler
+parallel p
+idler idler 0.05 0.05 0.01
 1
 s
 1
-stopper
-100
+stopper 100
 0
-worker
-25000
-50000
-wp1
+worker wp1 25000 50000
 1
-worker
-25000
-50000
-wp2
+worker wp2 25000 50000
 1
-worker
-25000
-50000
-wp3
+worker wp3 25000 50000
 1
-worker
-25000
-50000
-wp4
+worker wp4 25000 50000
 1
-worker
-25000
-50000
-wp5
+worker wp5 25000 50000
 0
 done
 done

@@ -358,12 +358,12 @@ std::variant<std::variant<std::shared_ptr<LoopScheduler::Group>, std::shared_ptr
             int min_work;
             int max_work;
             std::string name;
+            std::cout << "Enter a name for this module. This name will appear in the report: ";
+            std::cin >> name;
             std::cout << "Enter the minimum work amount for the WorkingModule: ";
             std::cin >> min_work;
             std::cout << "Enter the maximum work amount for the WorkingModule: ";
             std::cin >> max_work;
-            std::cout << "Enter a name for this module. This name will appear in the report: ";
-            std::cin >> name;
             bool can_run_in_parallel = input[0] == 'a';
             return std::make_shared<WorkingModule>(min_work, max_work, report, name, can_run_in_parallel);
         }
@@ -373,6 +373,8 @@ std::variant<std::variant<std::shared_ptr<LoopScheduler::Group>, std::shared_ptr
             double max_time;
             double idling_time_slice;
             std::string name;
+            std::cout << "Enter a name for this module. This name will appear in the report: ";
+            std::cin >> name;
             std::cout << "Enter the minimum time in seconds for the IdlingTimerModule: ";
             std::cin >> min_time;
             std::cout << "Enter the maximum time in seconds for the IdlingTimerModule: ";
@@ -381,8 +383,6 @@ std::variant<std::variant<std::shared_ptr<LoopScheduler::Group>, std::shared_ptr
             std::cout << "After that, it idles at time slices and checks whether it's done waiting.\n";
             std::cout << "Enter the idling time slice in seconds for the IdlingTimerModule: ";
             std::cin >> idling_time_slice;
-            std::cout << "Enter a name for this module. This name will appear in the report: ";
-            std::cin >> name;
             return std::make_shared<IdlingTimerModule>(min_time, max_time, idling_time_slice, report, name);
         }
         if (groups.contains(input))

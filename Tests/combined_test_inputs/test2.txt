@@ -19,44 +19,22 @@ because SequentialGroup doesn't support that.
 Input:
 
 c
-sequential
-s
-worker
-10000
-20000
-ws1
-worker
-10000
-20000
-ws2
+sequential s
+worker ws1 10000 20000
+worker ws2 10000 20000
 done
-parallel
-p
-idler
-0.05
-0.05
-0.01
-idler
+parallel p
+idler idler 0.05 0.05 0.01
 1
 s
 1
-stopper
-100
+stopper 100
 0
-worker
-100000
-150000
-wp1
+worker wp1 100000 150000
 1
-worker
-100000
-150000
-wp2
+worker wp2 100000 150000
 1
-worker
-100000
-150000
-wp3
+worker wp3 100000 150000
 0
 done
 done

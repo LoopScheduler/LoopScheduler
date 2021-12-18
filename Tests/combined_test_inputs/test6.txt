@@ -25,63 +25,32 @@ ParallelGroup doesn't wait to start the next iteration.
 Input:
 
 c
-sequential
-s
-worker
-100000
-150000
-ws1
-worker
-100000
-150000
-ws2
+sequential s
+worker ws1 100000 150000
+worker ws2 100000 150000
 done
-parallel
-p
-worker
-100000
-150000
-wp1
+parallel p
+worker wp1 100000 150000
 1
-worker
-100000
-150000
-wp2
+worker wp2 100000 150000
 0
 done
-parallel
-r
+parallel r
 s
 1
 p
 1
-worker
-400000
-500000
-wrlong
+worker wrlong 400000 500000
 1
-worker
-100000
-150000
-wr1
+worker wr1 100000 150000
 1
-worker
-100000
-150000
-wr2
+worker wr2 100000 150000
 1
-worker
-100000
-150000
-wr3
+worker wr3 100000 150000
 1
-worker
-100000
-150000
-wr4
+worker wr4 100000 150000
 1
-stopper
-50
+stopper 50
 0
 done
 done

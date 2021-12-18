@@ -38,16 +38,10 @@ done
 parallel p4
 done
 sequential s6
-worker
-100000
-100000
-w2
+worker w2 100000 100000
 done
 parallel p6
-worker
-100000
-100000
-w3
+worker w3 100000 100000
 0
 done
 sequential s1
@@ -64,10 +58,7 @@ parallel p5
 p6 0
 done
 parallel p1
-worker
-100000
-100000
-w1
+worker w1 100000 100000
 0
 s1
 0
@@ -77,8 +68,7 @@ s5
 0
 p5
 0
-stopper
-100
+stopper 100
 0
 done
 done
