@@ -1,0 +1,50 @@
+Description:
+
+ParallelGroup p:
+    Worker wlong
+    Worker w0
+    AWorker aw1*
+    AWorker aw2**
+    Stopper
+
+*: Can run more than once per iteration.
+**: Can run more than once per iteration, 2 times per extra iteration.
+
+Expected behavior:
+aw2 to run double the aw1 after the first run in 1 iteration.
+Normal workers would run equal times,
+because one of them couldn't run 2 times immediately,
+and the other thread has to find something to run.
+
+Input:
+
+c
+parallel
+p
+worker
+200000
+200000
+wlong
+0
+worker
+25000
+25000
+w0
+0
+aworker
+25000
+25000
+aw1
+1
+aworker
+25000
+25000
+aw2
+2
+stopper
+10
+0
+done
+done
+p
+4

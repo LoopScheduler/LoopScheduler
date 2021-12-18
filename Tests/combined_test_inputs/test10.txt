@@ -1,0 +1,73 @@
+Description:
+
+ParallelGroup r:
+    Stopper
+    Worker wlong
+    Worker w1*
+    Worker w2*
+    ParallelGroup p*:
+        Worker w3*
+        Worker w4*
+        Worker w5*
+        Worker w6*
+    Stopper
+
+*: Can run more than once per iteration.
+
+Expected behavior:
+Unfair distribution between w1-w2 and w3-w6 runs after their first run in an iteration.
+This behavior depends on the number of threads too,
+because workers are used, not of aworkers.
+
+Input:
+
+c
+parallel
+p
+worker
+25000
+25000
+w3
+1
+worker
+25000
+25000
+w4
+1
+worker
+25000
+25000
+w5
+1
+worker
+25000
+25000
+w6
+1
+done
+parallel
+r
+stopper
+10
+0
+worker
+200000
+200000
+wlong
+0
+worker
+25000
+25000
+w1
+1
+worker
+25000
+25000
+w2
+1
+p
+1
+done
+done
+r
+4

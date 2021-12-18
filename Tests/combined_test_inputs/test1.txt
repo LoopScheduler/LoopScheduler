@@ -12,7 +12,7 @@ ParallelGroup p:
     Worker wp4*
     Worker wp5
 
-*: Can run more than once per iteration
+*: Can run more than once per iteration.
 
 Expected behavior:
 ws2 can only run after ws1, and the idler thread should be used by other workers when it's idling.

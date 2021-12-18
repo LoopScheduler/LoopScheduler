@@ -10,7 +10,7 @@ ParallelGroup p:
     Worker wp2*
     Worker wp3
 
-*: Can run more than once per iteration
+*: Can run more than once per iteration.
 
 Expected behavior:
 The SequentialGroup's workers are fast, but they're not run multiple times per iteration,

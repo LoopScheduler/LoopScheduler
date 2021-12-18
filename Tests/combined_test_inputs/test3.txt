@@ -5,7 +5,7 @@ ParallelGroup p:
     Worker worker
     AWorker* aworker
 
-*: Can run more than once per iteration
+*: Can run more than once per iteration.
 AWorker: Worker with CanRunInParallel=true
 
 Expected behavior:

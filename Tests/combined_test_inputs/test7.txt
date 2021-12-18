@@ -1,0 +1,90 @@
+Description:
+
+SequentialGroup r:
+    ParallelGroup p1:
+        Worker wp11*
+        Worker wp12*
+    SequentialGroup s:
+        Worker ws1
+        Worker ws2
+    Worker wr1*
+    Worker wr2*
+    Stopper
+    ParallelGroup p2:
+        Worker wp2long*
+        Worker wp21*
+        Worker wp22*
+
+*: Can run more than once per iteration.
+
+Expected behavior:
+To test groups as members of SequentialGroup.
+wp11 and wp12 can run multiple times per iteration, but shouldn't.
+wp21 and wp22 should run multiple times per iteration while waiting for wp2long.
+ws1, ws2, wr1 and wr2 run in order and once per iteration.
+SequentialGroup waits to start the next iteration.
+
+Input:
+
+c
+parallel
+p1
+worker
+100000
+150000
+wp11
+1
+worker
+100000
+150000
+wp12
+1
+done
+sequential
+s
+worker
+100000
+150000
+ws1
+worker
+100000
+150000
+ws2
+done
+parallel
+p2
+worker
+400000
+500000
+wp2long
+1
+worker
+100000
+150000
+wp21
+1
+worker
+100000
+150000
+wp22
+1
+done
+sequential
+r
+p1
+s
+worker
+100000
+150000
+wr1
+worker
+100000
+150000
+wr2
+stopper
+50
+p2
+done
+done
+r
+4

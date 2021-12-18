@@ -1,0 +1,81 @@
+Description:
+
+SequentialGroup s1:
+    Worker w1
+    ParallelGroup p1:
+        SequentialGroup s2:
+            ParallelGroup p2:
+        ParallelGroup p3:
+            ParallelGroup p4:
+    SequentialGroup s3:
+        SequentialGroup s4:
+    ParallelGroup p5:
+        ParallelGroup p6:
+            Worker w2
+    SequentialGroup s5:
+        SequentialGroup s6:
+            Worker w3
+    Stopper
+
+*: Can run more than once per iteration.
+
+Expected behavior:
+To run without any problem.
+
+Input:
+
+c
+parallel p2
+done
+parallel p4
+done
+sequential s2
+p2
+done
+parallel p3
+p4 0
+done
+sequential s4
+done
+parallel p6
+worker
+100000
+100000
+w2
+0
+done
+sequential s6
+worker
+100000
+100000
+w3
+0
+done
+parallel p1
+s2 0
+p3 0
+done
+sequential s3
+s4
+done
+parallel p5
+p6 0
+done
+sequential s5
+s6
+done
+sequential s1
+worker
+100000
+100000
+w1
+p1
+s3
+p5
+s5
+stopper
+100
+done
+done
+s1
+4

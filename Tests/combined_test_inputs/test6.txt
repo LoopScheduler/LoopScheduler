@@ -1,0 +1,89 @@
+Description:
+
+ParallelGroup r:
+    SequentialGroup s*:
+        Worker ws1
+        Worker ws2
+    ParallelGroup p*:
+        Worker wp1*
+        Worker wp2
+    Worker wrlong*
+    Worker wr1*
+    Worker wr2*
+    Worker wr3*
+    Worker wr4*
+    Stopper
+
+*: Can run more than once per iteration.
+
+Expected behavior:
+To test groups as members of ParallelGroup.
+wp1 can run multiple times per iteration, wp2 can't.
+ws1 and ws2 run in order and once per iteration.
+ParallelGroup doesn't wait to start the next iteration.
+
+Input:
+
+c
+sequential
+s
+worker
+100000
+150000
+ws1
+worker
+100000
+150000
+ws2
+done
+parallel
+p
+worker
+100000
+150000
+wp1
+1
+worker
+100000
+150000
+wp2
+0
+done
+parallel
+r
+s
+1
+p
+1
+worker
+400000
+500000
+wrlong
+1
+worker
+100000
+150000
+wr1
+1
+worker
+100000
+150000
+wr2
+1
+worker
+100000
+150000
+wr3
+1
+worker
+100000
+150000
+wr4
+1
+stopper
+50
+0
+done
+done
+r
+4

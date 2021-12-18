@@ -1,0 +1,72 @@
+Description:
+
+ParallelGroup r:
+    Stopper
+    Worker wlong
+    Worker w1*
+    Worker w2*
+    ParallelGroup p****:
+        Worker w3*
+        Worker w4*
+        Worker w5*
+        Worker w6*
+    Stopper
+
+*: Can run more than once per iteration.
+****: Can run more than once per iteration, 4 times per extra iteration.
+
+Expected behavior:
+Evenly distributed w1-w6 to runs.
+
+Input:
+
+c
+parallel
+p
+worker
+25000
+25000
+w3
+1
+worker
+25000
+25000
+w4
+1
+worker
+25000
+25000
+w5
+1
+worker
+25000
+25000
+w6
+1
+done
+parallel
+r
+stopper
+10
+0
+worker
+200000
+200000
+wlong
+0
+worker
+25000
+25000
+w1
+1
+worker
+25000
+25000
+w2
+1
+p
+4
+done
+done
+r
+4
