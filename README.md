@@ -106,7 +106,7 @@ Here are some examples to get an idea of how to used LoopScheduler.
 
 To use LoopScheduler, include: [./LoopScheduler/LoopScheduler.h](https://github.com/LoopScheduler/LoopScheduler/blob/main/LoopScheduler/LoopScheduler.h)
 
-## Implementing a Module
+## Implementing a simple Module
 
 ```
 class MyModule : LoopScheduler::Module
@@ -125,23 +125,25 @@ class MyModule : LoopScheduler::Module
 ```
 void SetupAndRun()
 {
-    // Prepare a ParallelGroup
-
-    // Prepare its members:
+    // Prepare ParallelGroup members:
     std::vector<LoopScheduler::ParallelGroupMember> parallel_members;
+
     // Create the first member:
     auto member1 = LoopScheduler::ParallelGroupMember(
         std::make_shared<MyModule>()
     );
     // Add to the vector:
     parallel_members.push_back(member1);
-    // Prepare the second member, as one that can more than once per iteration (with 1 run share per extra iteration):
+
+    // Prepare the second member, as one that can run more than once per iteration (with 1 run share per extra iteration):
     auto member2 = LoopScheduler::ParallelGroupMember(
         std::make_shared<MyModule>(), 1
     );
     parallel_members.push_back(member2);
+
     // Create the ParallelGroup:
     std::shared_ptr<LoopScheduler::ParallelGroup> parallel_group(new LoopScheduler::ParallelGroup(parallel_members));
+
     // Alternatively:
     auto parallel_group_alt = std::make_shared<LoopScheduler::ParallelGroup>(parallel_members);
 
@@ -152,6 +154,12 @@ void SetupAndRun()
     loop.Run();
 }
 ```
+
+## Important note on smart pointers
+
+Make sure to never use std::shared_ptr in 2 objects pointing at each other.
+This will cause in memory leak.
+It is recommended to use std::weak_ptr to access peers.
 
 # Test
 
