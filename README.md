@@ -100,7 +100,7 @@ To build using CMake on Windows:
 
 # Get started
 
-Here are some examples to get an idea of how to used LoopScheduler.
+Here are some examples to get an idea of how to use LoopScheduler.
 
 ## Include
 
@@ -157,9 +157,9 @@ void SetupAndRun()
 
 ## Important note on smart pointers
 
-Make sure to never use std::shared_ptr in 2 objects pointing at each other.
-This will cause in memory leak.
-It is recommended to use std::weak_ptr to access peers.
+Make sure to never use `std::shared_ptr` in 2 objects pointing at each other.
+This will cause a memory leak.
+It is recommended to use `std::weak_ptr` to access peers.
 
 # Test
 
