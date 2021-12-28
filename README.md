@@ -174,4 +174,4 @@ combined_test offers 3 options initially:
 
 The test results are manually verified except the pre-defined test2.
 Some test inputs are available in [./Tests/combined_test_inputs](https://github.com/LoopScheduler/LoopScheduler/tree/main/Tests/combined_test_inputs).
-To try them, copy the lines under "Input:" and paste them into the terminal after running combined_test.
+To try them, copy the lines under "Input:", run combined_test and paste them into the CLI.
