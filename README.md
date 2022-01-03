@@ -175,7 +175,7 @@ void SetupAndRun()
 
 Make sure to never use `std::shared_ptr` in 2 objects pointing at each other.
 This will cause a memory leak.
-It is recommended to use `std::weak_ptr` or simple pointers combined with code to handle object destruction, to access peers.
+It is recommended to use `std::weak_ptr` when possible, or simple pointers combined with code to handle object destruction, to access peers.
 
 # Test
 
