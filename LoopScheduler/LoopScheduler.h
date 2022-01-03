@@ -18,6 +18,10 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+/// @file LoopScheduler.h
+/// @brief Includes all LoopScheduler classes.
+///        This is the header to include to use LoopScheduler.
+
 #pragma once
 
 #include "Loop.h"

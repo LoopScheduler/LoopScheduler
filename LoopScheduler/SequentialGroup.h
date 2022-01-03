@@ -32,6 +32,8 @@
 
 namespace LoopScheduler
 {
+    /// @brief Represents a group member of either another group or a module.
+    ///        Used by SequentialGroup.
     typedef std::variant<std::shared_ptr<Group>, std::shared_ptr<Module>> SequentialGroupMember;
     /// @brief A group that runs the subgroups and modules only once per iteration, in order and without overlapping.
     ///

@@ -25,6 +25,8 @@
 
 namespace LoopScheduler
 {
+    /// @brief A TimeSpanPredictor implementation that uses Exponential Moving Average
+    ///        with 2 different weights for incrementing and decrementing.
     class BiasedEMATimeSpanPredictor final : public TimeSpanPredictor
     {
     public:

@@ -18,6 +18,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+/// @file LoopScheduler.dec.h
+/// @brief Declares all LoopScheduler classes, and is included in LoopScheduler's headers.
+
 #pragma once
 
 namespace LoopScheduler
