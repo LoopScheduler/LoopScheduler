@@ -90,13 +90,26 @@ To build using CMake on Linux:
 
   1. Install cmake, make and a C++ compiler using the package manager.
   2. Choose/create a build folder and navigate to there in terminal.
-  3. Enter `cmake <project-path> && make` (replace `<project-path>` with the project's root directory where CMakeLists.txt exists).
+  3. Enter `cmake <project-path> -DBUILD_TESTS=ON && make`,
+     replace `<project-path>` with the project's root directory where CMakeLists.txt exists, include `-DBUILD_TESTS=ON` to build the tests.
      The test executables will be in the Tests folder where the commands were executed.
+
+Or simply:
+
+  2. Navigate to the project's root folder in terminal.
+  3. Enter these commands:
+
+  ```
+  mkdir Build
+  cd Build
+  cmake .. -DBUILD_TESTS=ON && make
+  ```
 
 To build using CMake on Windows:
 
   1. Download and install CMake from: https://cmake.org/download/
-  2. Generate the project for an IDE and use the supported IDE to build.
+  2. Open the project in CMake and enable the BUILD_TESTS option to build the tests.
+  3. Generate the project for an IDE and use the supported IDE to build.
 
 # Get started
 
