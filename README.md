@@ -111,6 +111,9 @@ To build using CMake on Windows:
   2. Open the project in CMake and enable the BUILD_TESTS option to build the tests.
   3. Generate the project for an IDE and use the supported IDE to build.
 
+The static library will be built to be used in another CMake project or to be linked.
+See an example of CMake linking in [./Tests/CMakeLists.txt](https://github.com/LoopScheduler/LoopScheduler/blob/main/Tests/CMakeLists.txt).
+
 # Get started
 
 Here are some examples to get an idea of how to use LoopScheduler.
