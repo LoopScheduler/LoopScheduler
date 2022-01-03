@@ -191,3 +191,9 @@ combined_test offers 3 options initially:
 The test results are manually verified except the pre-defined test2.
 Some test inputs are available in [./Tests/combined_test_inputs](https://github.com/LoopScheduler/LoopScheduler/tree/main/Tests/combined_test_inputs).
 To try them, copy the lines under "Input:", run combined_test and paste them into the command-line interface.
+
+# Contributing
+
+Before contributing to this project, please open an issue and discuss the change you wish to make.
+The code in this repository is meant to be kept as simple as possible and might be expanded in future work separately.
+More complex Groups and TimeSpanPredictors are possible, but this project is not meant to include them.
