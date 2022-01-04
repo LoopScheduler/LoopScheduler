@@ -90,8 +90,8 @@ To build using CMake on Linux:
 
   1. Install cmake, make and a C++ compiler using the package manager.
   2. Choose/create a build folder and navigate to there in terminal.
-  3. Enter `cmake <project-path> -DBUILD_TESTS=ON && make`,
-     replace `<project-path>` with the project's root directory where CMakeLists.txt exists, include `-DBUILD_TESTS=ON` to build the tests.
+  3. Enter `cmake <project-path> -DLOOPSCHEDULER_BUILD_TESTS=ON && make`,
+     replace `<project-path>` with the project's root directory where CMakeLists.txt exists, include `-DLOOPSCHEDULER_BUILD_TESTS=ON` to build the tests.
      The test executables will be in the Tests folder where the commands were executed.
 
 Or simply:
@@ -102,13 +102,13 @@ Or simply:
   ```
   mkdir Build
   cd Build
-  cmake .. -DBUILD_TESTS=ON && make
+  cmake .. -DLOOPSCHEDULER_BUILD_TESTS=ON && make
   ```
 
 To build using CMake on Windows:
 
   1. Download and install CMake from: https://cmake.org/download/
-  2. Open the project in CMake and enable the BUILD_TESTS option to build the tests.
+  2. Open the project in CMake and enable the LOOPSCHEDULER_BUILD_TESTS option to build the tests.
   3. Generate the project for an IDE and use the supported IDE to build.
 
 The static library will be built to be used in another CMake project or to be linked.
