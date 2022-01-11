@@ -74,34 +74,38 @@ namespace LoopScheduler
         ShouldStop = false;
         guard.unlock();
 
+        auto loop = [this]
+        {
+            std::unique_lock<std::mutex> guard(Mutex);
+            guard.unlock();
+            while (true)
+            {
+                if (Architecture->IsDone())
+                {
+                    guard.lock();
+                    if (Architecture->IsDone())
+                    {
+                        if (ShouldStop)
+                            return;
+                        Architecture->StartNextIteration();
+                    }
+                    guard.unlock();
+                }
+
+                if (!Architecture->RunNext())
+                    Architecture->WaitForAvailability();
+            }
+        };
+
         std::vector<std::thread> threads;
-        for (int i = 0; i < threads_count; i++)
+        for (int i = 1; i < threads_count; i++)
         {
             threads.push_back(
-                std::thread([this]
-                {
-                    std::unique_lock<std::mutex> guard(Mutex);
-                    guard.unlock();
-                    while (true)
-                    {
-                        if (Architecture->IsDone())
-                        {
-                            guard.lock();
-                            if (Architecture->IsDone())
-                            {
-                                if (ShouldStop)
-                                    return;
-                                Architecture->StartNextIteration();
-                            }
-                            guard.unlock();
-                        }
-
-                        if (!Architecture->RunNext())
-                            Architecture->WaitForAvailability();
-                    }
-                })
+                std::thread(loop)
             );
         }
+
+        loop();
 
         for (int i = 0; i < threads.size(); i++)
             threads[i].join();
