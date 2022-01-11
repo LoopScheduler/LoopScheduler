@@ -1,0 +1,38 @@
+Description:
+
+ParallelGroup p:
+    SWorker w0
+    SWorker w1
+    SWorker w2
+    SWorker w3
+    SWorker w4
+    SWorker w5
+
+*: Can run more than once per iteration.
+SWorker: Worker running in the same thread as before using a custom CanRun
+
+Expected behavior:
+Each worker only runs in 1 same thread.
+
+Input:
+
+c
+parallel p
+sworker w0 100000 100000
+0
+sworker w1 100000 100000
+0
+sworker w2 100000 100000
+0
+sworker w3 100000 100000
+0
+sworker w4 100000 100000
+0
+sworker w5 100000 100000
+0
+stopper 10
+0
+done
+done
+p
+4

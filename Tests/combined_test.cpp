@@ -148,28 +148,36 @@ void StoppingModule::OnRun()
 class WorkingModule : public LoopScheduler::Module
 {
 public:
-    WorkingModule(int WorkAmountMin, int WorkAmountMax, Report& ReportRef, std::string Name, bool CanRunInParallel = false);
+    WorkingModule(int WorkAmountMin, int WorkAmountMax, Report& ReportRef, std::string Name, bool CanRunInParallel = false, bool UseCustomCanRUn = false);
 protected:
     virtual void OnRun() override;
+    virtual bool CanRun() override;
 private:
     std::random_device random_device;
     std::default_random_engine random_engine;
     std::uniform_int_distribution<int> random_distribution;
     Report& ReportRef;
     std::string Name;
+    bool HadFirstRun;
+    std::thread::id thread_id;
 };
 
-WorkingModule::WorkingModule(int WorkAmountMin, int WorkAmountMax, Report& ReportRef, std::string Name, bool CanRunInParallel)
+WorkingModule::WorkingModule(int WorkAmountMin, int WorkAmountMax, Report& ReportRef, std::string Name, bool CanRunInParallel, bool UseCustomCanRUn)
     : random_device(),
       random_engine(random_device()),
       random_distribution(WorkAmountMin, WorkAmountMax),
       ReportRef(ReportRef),
       Name(Name),
-      Module(CanRunInParallel)
+      Module(CanRunInParallel, nullptr, nullptr, UseCustomCanRUn)
 {
 }
 void WorkingModule::OnRun()
 {
+    if (!HadFirstRun)
+    {
+        thread_id = std::this_thread::get_id();
+        HadFirstRun = true;
+    }
     int report_id = ReportRef.ReportStart(Name);
     int WorkAmount = random_distribution(random_engine);
     for (int i = 0; i < WorkAmount; i++)
@@ -177,6 +185,14 @@ void WorkingModule::OnRun()
         for (int i = 0; i < 100; i++); // Work unit
     }
     ReportRef.ReportStop(report_id);
+}
+bool WorkingModule::CanRun()
+{
+    if (HadFirstRun)
+    {
+        return thread_id == std::this_thread::get_id();
+    }
+    return true;
 }
 
 void test1()
@@ -339,6 +355,7 @@ std::variant<std::variant<std::shared_ptr<LoopScheduler::Group>, std::shared_ptr
         std::cout << "  stopper: StoppingModule\n";
         std::cout << "  worker: WorkingModule\n";
         std::cout << "  aworker: WorkingModule with CanRunInParallel=true\n";
+        std::cout << "  sworker: WorkingModule running in the same thread as before\n";
         std::cout << "  idler: IdlingTimerModule\n";
         std::cout << "Or enter a group name to include that as a member, 'done' to stop: ";
         std::cin >> input;
@@ -353,7 +370,7 @@ std::variant<std::variant<std::shared_ptr<LoopScheduler::Group>, std::shared_ptr
             std::cin >> count;
             return std::make_shared<StoppingModule>(count);
         }
-        if (input == "worker" || input == "aworker")
+        if (input == "worker" || input == "aworker" || input == "sworker")
         {
             int min_work;
             int max_work;
@@ -365,7 +382,8 @@ std::variant<std::variant<std::shared_ptr<LoopScheduler::Group>, std::shared_ptr
             std::cout << "Enter the maximum work amount for the WorkingModule: ";
             std::cin >> max_work;
             bool can_run_in_parallel = input[0] == 'a';
-            return std::make_shared<WorkingModule>(min_work, max_work, report, name, can_run_in_parallel);
+            bool use_custom_can_run = input[0] == 's';
+            return std::make_shared<WorkingModule>(min_work, max_work, report, name, can_run_in_parallel, use_custom_can_run);
         }
         if (input == "idler")
         {

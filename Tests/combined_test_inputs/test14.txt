@@ -1,0 +1,37 @@
+Description:
+
+ParallelGroup p:
+    Worker w0
+    Worker w1
+    Worker w2
+    Worker w3
+    Worker w4
+    Worker w5
+
+*: Can run more than once per iteration.
+
+Expected behavior:
+Unlike the test with SWorkers, workers can run in any thread.
+
+Input:
+
+c
+parallel p
+worker w0 100000 100000
+0
+worker w1 100000 100000
+0
+worker w2 100000 100000
+0
+worker w3 100000 100000
+0
+worker w4 100000 100000
+0
+worker w5 100000 100000
+0
+stopper 10
+0
+done
+done
+p
+4
