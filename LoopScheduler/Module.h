@@ -46,12 +46,16 @@ namespace LoopScheduler
         ///   MyModule::MyModule(...) : Module(...) { ... }
         ///
         /// @param CanRunInParallel Whether the module can run in another thread while it's already running.
-        /// @param HigherExecutionTimePredictor Predictor to predict the higher timespan.
-        /// @param LowerExecutionTimePredictor Predictor to predict the lower timespan.
+        /// @param HigherExecutionTimePredictor Predictor to predict the higher timespan. nullptr to use default.
+        /// @param LowerExecutionTimePredictor Predictor to predict the lower timespan. nullptr to use default.
+        /// @param UseCustomCanRun Whether to use the virtual CanRun to check for availability before running too.
+        ///                        Doesn't support IsAvailable or WaitForAvailability, IsAvailable may return true when CanRun returns false.
+        ///                        Only use custom CanRun if really needed.
         Module(
             bool CanRunInParallel = false,
             std::unique_ptr<TimeSpanPredictor> HigherExecutionTimePredictor = nullptr,
-            std::unique_ptr<TimeSpanPredictor> LowerExecutionTimePredictor = nullptr
+            std::unique_ptr<TimeSpanPredictor> LowerExecutionTimePredictor = nullptr,
+            bool UseCustomCanRun = false
         );
         virtual ~Module() = default;
 
@@ -89,6 +93,7 @@ namespace LoopScheduler
         ///        while reserving that run until the token is destructed or used.
         RunningToken GetRunningToken();
         /// @brief Checks whether it's permitted to run the module.
+        ///        May give false positive (return true when cannot run) if a custom CanRun code is used.
         bool IsAvailable();
         /// @brief Waits until it's permitted to run the module.
         ///        May give false positive (return when cannot run).
@@ -113,6 +118,7 @@ namespace LoopScheduler
         Loop * GetLoop();
     protected:
         virtual void OnRun() = 0;
+        virtual bool CanRun();
         /// @brief To handle an exception that is derived from std::exception
         virtual void HandleException(const std::exception& e);
         /// @brief To handle an unknown exception
@@ -153,7 +159,14 @@ namespace LoopScheduler
         ///                            or until the token is destructed.
         IdlingToken StartIdling(double MaxWaitingTimeAfterStop, double TotalMaxWaitingTime = 0);
     private:
-        const bool CanRunInParallel;
+        enum CanRunPolicyType
+        {
+            CannotRunInParallel = 0,
+            CanRunInParallel = 1,
+            CannotRunInParallelCustom = 2,
+            CanRunInParallelCustom = 3,
+        };
+        const CanRunPolicyType CanRunPolicy;
 
         std::shared_mutex SharedMutex;
 

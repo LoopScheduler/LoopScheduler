@@ -33,8 +33,14 @@ namespace LoopScheduler
     Module::Module(
             bool CanRunInParallel,
             std::unique_ptr<TimeSpanPredictor> HigherExecutionTimePredictor,
-            std::unique_ptr<TimeSpanPredictor> LowerExecutionTimePredictor
-        ) : CanRunInParallel(CanRunInParallel), Parent(nullptr), LoopPtr(nullptr), _IsAvailable(true)
+            std::unique_ptr<TimeSpanPredictor> LowerExecutionTimePredictor,
+            bool UseCustomCanRun
+        ) : CanRunPolicy(CanRunInParallel ? (
+                    (UseCustomCanRun ? CanRunPolicyType::CanRunInParallelCustom : CanRunPolicyType::CanRunInParallel)
+                ) : (
+                    (UseCustomCanRun ? CanRunPolicyType::CannotRunInParallelCustom : CanRunPolicyType::CannotRunInParallel)
+            )),
+            Parent(nullptr), LoopPtr(nullptr), _IsAvailable(true)
     {
         if (HigherExecutionTimePredictor == nullptr)
             HigherExecutionTimePredictor = std::unique_ptr<BiasedEMATimeSpanPredictor>(new BiasedEMATimeSpanPredictor(0, 0.2, 0.05));
@@ -63,22 +69,48 @@ namespace LoopScheduler
 
     Module::RunningToken::RunningToken(Module * Creator) : Creator(Creator)
     {
-        if (Creator->CanRunInParallel)
+        switch (Creator->CanRunPolicy)
         {
-            _CanRun = true;
-        }
-        else
-        {
-            std::unique_lock<std::shared_mutex> lock(Creator->SharedMutex);
-            if (Creator->_IsAvailable)
+            case CanRunPolicyType::CannotRunInParallel:
             {
-                Creator->_IsAvailable = false;
+                std::unique_lock<std::shared_mutex> lock(Creator->SharedMutex);
+                if (Creator->_IsAvailable)
+                {
+                    Creator->_IsAvailable = false;
+                    _CanRun = true;
+                }
+                else
+                {
+                    _CanRun = false;
+                }
+            }
+            break;
+            case CanRunPolicyType::CanRunInParallel:
+            {
                 _CanRun = true;
             }
-            else
+            break;
+            case CanRunPolicyType::CannotRunInParallelCustom:
             {
-                _CanRun = false;
+                
+                std::unique_lock<std::shared_mutex> lock(Creator->SharedMutex);
+                if (Creator->_IsAvailable)
+                {
+                    _CanRun = Creator->CanRun();
+                    if (_CanRun)
+                        Creator->_IsAvailable = false;
+                }
+                else
+                {
+                    _CanRun = false;
+                }
             }
+            break;
+            case CanRunPolicyType::CanRunInParallelCustom:
+            {
+                _CanRun = Creator->CanRun();
+            }
+            break;
         }
     }
     Module::RunningToken::RunningToken(RunningToken&& op)
@@ -96,7 +128,9 @@ namespace LoopScheduler
     {
         if (Creator == nullptr)
             return;
-        if (!Creator->CanRunInParallel && _CanRun)
+        if (_CanRun && (
+                Creator->CanRunPolicy == CanRunPolicyType::CannotRunInParallel
+                || Creator->CanRunPolicy == CanRunPolicyType::CannotRunInParallelCustom))
         {
             std::unique_lock<std::shared_mutex> lock(Creator->SharedMutex);
             Creator->_IsAvailable = true;
@@ -118,7 +152,7 @@ namespace LoopScheduler
         {
             _CanRun = false;
             // Guarantees to set _IsAvailable to true at the end
-            // Doesn't matter if Creator->CanRunInParallel
+            // Doesn't matter if can run in parallel
             SetToTrueGuard g(Creator->_IsAvailable, Creator->SharedMutex, Creator->AvailabilityConditionVariable);
             auto start = std::chrono::steady_clock::now();
             try
@@ -226,6 +260,7 @@ namespace LoopScheduler
         return LoopPtr;
     }
 
+    bool Module::CanRun() { return true; }
     void Module::HandleException(const std::exception& e) {}
     void Module::HandleException(std::exception_ptr e_ptr) {}
 
