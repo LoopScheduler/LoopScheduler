@@ -37,6 +37,9 @@ namespace LoopScheduler
         ~Loop();
 
         /// @brief Thread-safe method to run the loop. An exception will be thrown if called more than once without a Stop() in between.
+        ///
+        /// One of the loop threads is the one which this method is called in, new threads are created for others.
+        ///
         /// @param threads_count The number of threads to allocate. The default is the number of logical CPU cores.
         void Run(int threads_count = 0);
         /// @brief Thread-safe method to stop the loop. Won't do anything if the loop isn't running.
