@@ -2,8 +2,7 @@
 title: 'LoopScheduler: A customizable and extensible framework for game loop architecture'
 tags:
   - C++
-  - game
-  - loop
+  - game loop
   - game engine
   - software architecture
 authors:
