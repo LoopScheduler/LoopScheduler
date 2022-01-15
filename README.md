@@ -177,6 +177,15 @@ Make sure to never use `std::shared_ptr` in 2 objects pointing at each other.
 This will cause a memory leak.
 It is recommended to use `std::weak_ptr` when possible, or simple pointers combined with code to handle object destruction, to access peers.
 
+# Recommendations for game loop architecture
+
+An ideal loop for a resource demanding game would be a ParallelGroup with modules that can run more than once and can handle the synchronization.
+This way no module can be a bottleneck, this is important because different computers may have different bottlenecks.
+Other loop architectures can be designed for less demanding games to make the implementation of modules easier.
+
+It's recommended to do IO tasks like reading files in a single module that cannot run in parallel, that means in a single thread.
+Doing them in multiple theads doesn't improve performance and may introduce stutters.
+
 # Test
 
 The 2 evaluate executables are used to evaluate the performance.
