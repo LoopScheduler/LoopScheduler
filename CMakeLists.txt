@@ -4,13 +4,17 @@ project(LoopScheduler)
 
 set(CMAKE_CXX_STANDARD 20)
 
+option(LOOPSCHEDULER_BUILD_TESTS "Build the tests" OFF)
+
 if (("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang") OR ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU"))
 
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
+  if (LOOPSCHEDULER_BUILD_TESTS)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
+  else()
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -O2")
+  endif()
 
 endif()
-
-option(LOOPSCHEDULER_BUILD_TESTS "Build the tests" OFF)
 
 add_subdirectory(LoopScheduler)
 
