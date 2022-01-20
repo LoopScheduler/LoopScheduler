@@ -110,6 +110,8 @@ To build using CMake on Windows:
   1. Download and install CMake from: https://cmake.org/download/
   2. Open the project in CMake and enable the LOOPSCHEDULER_BUILD_TESTS option to build the tests.
   3. Generate the project for an IDE and use the supported IDE to build.
+     Make sure to disable optimizations for evaluations and tests, because they contain dummy loops.
+     This is automatically done for GNU (g++) and Clang (clang++) compilers.
 
 The static library will be built to be used in another CMake project or to be linked.
 See an example of CMake linking in [./Tests/CMakeLists.txt](https://github.com/LoopScheduler/LoopScheduler/blob/main/Tests/CMakeLists.txt).
@@ -188,6 +190,8 @@ Doing them in multiple theads doesn't improve performance and may introduce stut
 
 # Test
 
+All the tests must be compiled with compiler optimizations off.
+This is because they contain dummy loops to simulate work.
 The 2 evaluate executables are used to evaluate the performance.
 To test the behavior, use combined_test to run one of the 2 pre-defined tests or create and run a custom test.
 combined_test offers 3 options initially:
