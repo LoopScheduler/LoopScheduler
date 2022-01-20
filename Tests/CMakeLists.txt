@@ -1,3 +1,9 @@
+if (("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang") OR ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU"))
+
+    add_link_options(-pthread)
+
+endif()
+
 add_executable(combined_test combined_test.cpp)
 target_link_libraries(combined_test LoopScheduler)
 
