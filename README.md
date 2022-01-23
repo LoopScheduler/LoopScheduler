@@ -24,7 +24,7 @@ The main concepts are described here, more details are available in the code doc
 
 A Loop object contains a Group as its root architecture.
 This Group is used to schedule the next task.
-The Loop object, runs loops in different threads and runs tasks from the root Group.
+The Loop object, runs loops in different threads that run tasks from the root Group.
 
 ## Group
 
@@ -79,19 +79,92 @@ Runs its members sequentially.
 A member cannot start its tasks until the previous member finishes its jobs.
 A single Group member is allowed to run its own members in parallel.
 
+### Possibilities
+
+Other types of groups can be implemented by the user for other purposes.
+For example, a dynamic threads group that can run the threads throughout multiple loop iterations,
+or other types of groups with other scheduling methods could be implemented.
+For simplicity, only SequentialGroup and ParallelGroup are designed and implemented.
+
+## An example
+
+<img src="Tests/Results/combined_test/test1-example-figure.svg" width="100%">
+
+This figure shows a part of the execution of a loop.
+The architecture (root) Group is a SequentialGroup that contains
+a module shown in gray with an S letter
+and a ParallelGroup containing an Idler module and 5 simple modules.
+In other words:
+
+```
+SequentialGroup:
+    ParallelGroup:
+        Module Idler
+        Module 1
+        Module 2
+        Module 3
+        Module 4
+        Module 5
+    Module S
+```
+
+Idler idles for a random timespan between 10-15ms which can represent a module that waits for the GPU to complete its current task.
+The 5 simple modules do work with different ranges of work amounts.
+This figure is based on real data of running a Loop with the described configuration.
+We can see that SequentialGroup makes use of the spare time by running other modules that take short enough time to run, from the member ParallelGroup.
+Also, right before running S again, it doesn't run other worker modules to avoid risking a delay in that iteration, because 1 may finish its work sooner.
+This is enabled by predicting the timespans for modules based on history.
+The timespan predictor itself is extensible.
+For example, general predictors that support different processor core frequencies can be implemented and used.
+For simplicity, the currently used predictor isn't designed for such processors.
+
+# Evaluation
+
+LoopScheduler is evaluated in 2 configurations, one having a SequentialGroup and the other having a ParallelGroup as the architecture.
+The ParallelGroup performance running n modules is compared to n threads calling the same function with no synchronization between them while running, and only the final joins.
+The SequentialGroup performance is compared to a for loop calling the same function.
+The efficiency is calculated by dividing the comparing code's execution time by LoopScheduler's time.
+Figures can be generated using
+[./Tests/Results/plot-evaluation-results.py](https://github.com/LoopScheduler/LoopScheduler/blob/main/Tests/Results/plot-evaluation-results.py).
+
+
+The evaluation result for
+[ParallelGroup in 8 threads with 80 modules vs 80 threads](https://github.com/LoopScheduler/LoopScheduler/blob/main/Tests/Results/parallel_evaluation/test-80-0.txt)
+shows that the times are competitive with many modules running in parallel.
+The iteration rates are close to game framerates in this particular configuration.
+In other cases,
+[ParallelGroup in 4 threads with 4 modules vs 4 threads](https://github.com/LoopScheduler/LoopScheduler/blob/main/Tests/Results/parallel_evaluation/test-4-slow.txt),
+[ParallelGroup in 8 threads with 8 modules vs 8 threads](https://github.com/LoopScheduler/LoopScheduler/blob/main/Tests/Results/parallel_evaluation/test-8-slow.txt)
+and
+[SequentialGroup in 4 threads vs simple loop, both running 2 modules per iteration](https://github.com/LoopScheduler/LoopScheduler/blob/main/Tests/Results/sequential_evaluation/test-4-2.txt),
+the efficiencies are below 1, mostly more than 0.99 and close to 0.995, and mostly more than 0.995 in
+[ParallelGroup in 8 threads with 8 modules vs 8 threads](https://github.com/LoopScheduler/LoopScheduler/blob/main/Tests/Results/parallel_evaluation/test-8-slow.txt).
+
 # Build
 
-CMake can be used to build the tests.
+CMake can be used to build.
 There are also clang++ commands at the start of the executable source files
 inside [./Tests](https://github.com/LoopScheduler/LoopScheduler/tree/main/Tests)
 and [./Lab](https://github.com/LoopScheduler/LoopScheduler/tree/main/Lab) directories.
 
-To build using CMake on Linux:
+## Usage
+
+To build your own code that uses LoopScheduler with CMake,
+add [add_subdirectory](https://cmake.org/cmake/help/latest/command/add_subdirectory.html)
+in your CMakeLists.txt file to add LoopScheduler's root directory,
+then to build your executable, after [add_executable](https://cmake.org/cmake/help/latest/command/add_executable.html),
+use [target_link_libraries](https://cmake.org/cmake/help/latest/command/target_link_libraries.html)
+to link your executable to LoopScheduler.
+See an example of CMake linking in [./Tests/CMakeLists.txt](https://github.com/LoopScheduler/LoopScheduler/blob/main/Tests/CMakeLists.txt).
+
+## Tests
+
+To build the tests using CMake on Linux:
 
   1. Install cmake, make and a C++ compiler using the package manager.
   2. Choose/create a build folder and navigate to there in terminal.
   3. Enter `cmake <project-path> -DLOOPSCHEDULER_BUILD_TESTS=ON && make`,
-     replace `<project-path>` with the project's root directory where CMakeLists.txt exists, include `-DLOOPSCHEDULER_BUILD_TESTS=ON` to build the tests.
+     replace `<project-path>` with the project's root directory where CMakeLists.txt exists.
      The test executables will be in the Tests folder where the commands were executed.
 
 Or simply:
@@ -105,16 +178,13 @@ Or simply:
   cmake .. -DLOOPSCHEDULER_BUILD_TESTS=ON && make
   ```
 
-To build using CMake on Windows:
+To build the tests using CMake on Windows:
 
   1. Download and install CMake from: https://cmake.org/download/
   2. Open the project in CMake and enable the LOOPSCHEDULER_BUILD_TESTS option to build the tests.
   3. Generate the project for an IDE and use the supported IDE to build.
      Make sure to disable optimizations for evaluations and tests, because they contain dummy loops.
      This is automatically done for GNU (g++) and Clang (clang++) compilers.
-
-The static library will be built to be used in another CMake project or to be linked.
-See an example of CMake linking in [./Tests/CMakeLists.txt](https://github.com/LoopScheduler/LoopScheduler/blob/main/Tests/CMakeLists.txt).
 
 # Get started
 
