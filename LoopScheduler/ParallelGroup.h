@@ -47,7 +47,25 @@ namespace LoopScheduler
     class ParallelGroup : public ModuleHoldingGroup
     {
     public:
-        ParallelGroup(std::vector<ParallelGroupMember>);
+        /// @param ExtendIterationForAdditionalGroupRuns Whether a member group with RunSharesAfterFirstRun > 0
+        ///                                              can start a new iteration and thus extend the time for
+        ///                                              IsDone to be true again
+        ///                                              for this group to start a new iteration.
+        ///                                              Use this parameter carefully, it could cause problems.
+        ///                                              Setting this to true can be useful when this group is
+        ///                                              a member of a SequentialGroup.
+        ///                                              When false, a new iteration won't be started
+        ///                                              on additional member group runs.
+        /// @param HigherExecutionTimePredictor Predictor to predict the higher execution time of the whole group.
+        ///                                     nullptr to use default.
+        /// @param LowerExecutionTimePredictor Predictor to predict the lower execution time of the whole group.
+        ///                                    nullptr to use default.
+        ParallelGroup(
+            std::vector<ParallelGroupMember> Members,
+            bool ExtendIterationForAdditionalGroupRuns = false,
+            std::unique_ptr<TimeSpanPredictor> HigherExecutionTimePredictor = nullptr,
+            std::unique_ptr<TimeSpanPredictor> LowerExecutionTimePredictor = nullptr
+        );
         virtual bool RunNext(double MaxEstimatedExecutionTime = 0) override;
         virtual bool IsRunAvailable(double MaxEstimatedExecutionTime = 0) override;
         virtual void WaitForRunAvailability(double MaxEstimatedExecutionTime = 0, double MaxWaitingTime = 0) override;
@@ -57,6 +75,8 @@ namespace LoopScheduler
         virtual void StartNextIteration() override;
         virtual double PredictHigherRemainingExecutionTime() override;
         virtual double PredictLowerRemainingExecutionTime() override;
+        virtual double PredictHigherExecutionTime() override;
+        virtual double PredictLowerExecutionTime() override;
     protected:
         virtual bool UpdateLoop(Loop*) override;
     private:
@@ -67,9 +87,20 @@ namespace LoopScheduler
         std::vector<std::shared_ptr<Group>> GroupMembers;
         std::list<int> MainQueue;
         std::list<int> SecondaryQueue;
+        bool ExtendIterationForAdditionalGroupRuns;
         int RunningThreadsCount;
         int NotifyingCounter;
         int RunNextCount;
+
+        /// Is set to true on measurement start,
+        /// and set to false after the measurement.
+        /// Measurement starts on the first RunNext(...) call after StartNextIteration() is called.
+        bool MeasuringTimespan;
+        /// Only set when MeasuringTimespan is false, MeasuringTimespan is set to true when this is set.
+        std::chrono::steady_clock::time_point IterationStartTime;
+
+        std::unique_ptr<TimeSpanPredictor> HigherExecutionTimePredictor;
+        std::unique_ptr<TimeSpanPredictor> LowerExecutionTimePredictor;
 
         class integer // 0 by default
         {
@@ -99,7 +130,15 @@ namespace LoopScheduler
             std::list<int>::iterator&,
             int
         );
-        inline bool RunGroup(std::shared_ptr<Group>&, std::unique_lock<std::shared_mutex>&);
+        inline bool RunGroup(std::shared_ptr<Group>&, std::unique_lock<std::shared_mutex>&, double MaxEstimatedExecutionTime);
+
+        /// Should be placed in RunNext's start.
+        /// NO MUTEX LOCK
+        inline void TimespanMeasurementStart();
+        /// Should be placed after each direct or indirect MainQueue.erase(...)
+        /// and before unlocking the mutex.
+        /// NO MUTEX LOCK
+        inline void TimespanMeasurementStop();
 
         /// NO MUTEX LOCK
         inline bool IsRunAvailableNoLock(double MaxEstimatedExecutionTime);

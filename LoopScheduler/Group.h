@@ -73,6 +73,14 @@ namespace LoopScheduler
         ///
         /// Only zero when nothing is being executed in the group, otherwise, always non-zero positive.
         virtual double PredictLowerRemainingExecutionTime() = 0;
+        /// @brief Returns the higher predicted execution time of the whole group in seconds.
+        ///
+        /// Thread-safe
+        virtual double PredictHigherExecutionTime() = 0;
+        /// @brief Returns the lower predicted execution time of the whole group in seconds.
+        ///
+        /// Thread-safe
+        virtual double PredictLowerExecutionTime() = 0;
         /// @brief Returns the group's parent group.
         Group * GetParent();
         /// @brief Returns the group's group members.

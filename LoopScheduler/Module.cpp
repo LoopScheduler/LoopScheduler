@@ -43,9 +43,21 @@ namespace LoopScheduler
             Parent(nullptr), LoopPtr(nullptr), _IsAvailable(true)
     {
         if (HigherExecutionTimePredictor == nullptr)
-            HigherExecutionTimePredictor = std::unique_ptr<BiasedEMATimeSpanPredictor>(new BiasedEMATimeSpanPredictor(0, 0.2, 0.05));
+            HigherExecutionTimePredictor = std::unique_ptr<BiasedEMATimeSpanPredictor>(
+                new BiasedEMATimeSpanPredictor(
+                    0,
+                    BiasedEMATimeSpanPredictor::DEFAULT_FAST_ALPHA,
+                    BiasedEMATimeSpanPredictor::DEFAULT_SLOW_ALPHA
+                )
+            );
         if (LowerExecutionTimePredictor == nullptr)
-            LowerExecutionTimePredictor = std::unique_ptr<BiasedEMATimeSpanPredictor>(new BiasedEMATimeSpanPredictor(0, 0.05, 0.2));
+            LowerExecutionTimePredictor = std::unique_ptr<BiasedEMATimeSpanPredictor>(
+                new BiasedEMATimeSpanPredictor(
+                    0,
+                    BiasedEMATimeSpanPredictor::DEFAULT_SLOW_ALPHA,
+                    BiasedEMATimeSpanPredictor::DEFAULT_FAST_ALPHA
+                )
+            );
         this->HigherExecutionTimePredictor = std::move(HigherExecutionTimePredictor);
         this->LowerExecutionTimePredictor = std::move(LowerExecutionTimePredictor);
     }

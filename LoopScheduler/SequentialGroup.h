@@ -44,7 +44,15 @@ namespace LoopScheduler
     class SequentialGroup : public ModuleHoldingGroup
     {
     public:
-        SequentialGroup(std::vector<SequentialGroupMember>);
+        /// @param HigherExecutionTimePredictor Predictor to predict the higher execution time of the whole group.
+        ///                                     nullptr to use default.
+        /// @param LowerExecutionTimePredictor Predictor to predict the lower execution time of the whole group.
+        ///                                    nullptr to use default.
+        SequentialGroup(
+            std::vector<SequentialGroupMember> Members,
+            std::unique_ptr<TimeSpanPredictor> HigherExecutionTimePredictor = nullptr,
+            std::unique_ptr<TimeSpanPredictor> LowerExecutionTimePredictor = nullptr
+        );
         virtual bool RunNext(double MaxEstimatedExecutionTime = 0) override;
         virtual bool IsRunAvailable(double MaxEstimatedExecutionTime = 0) override;
         virtual void WaitForRunAvailability(double MaxEstimatedExecutionTime = 0, double MaxWaitingTime = 0) override;
@@ -54,6 +62,8 @@ namespace LoopScheduler
         virtual void StartNextIteration() override;
         virtual double PredictHigherRemainingExecutionTime() override;
         virtual double PredictLowerRemainingExecutionTime() override;
+        virtual double PredictHigherExecutionTime() override;
+        virtual double PredictLowerExecutionTime() override;
     protected:
         virtual bool UpdateLoop(Loop*) override;
     private:
@@ -73,6 +83,19 @@ namespace LoopScheduler
 
         std::mutex NextEventConditionMutex;
         std::condition_variable NextEventConditionVariable;
+
+        /// Only set on the first RunNext(...) call after StartNextIteration() is called.
+        std::chrono::steady_clock::time_point IterationStartTime;
+
+        std::unique_ptr<TimeSpanPredictor> HigherExecutionTimePredictor;
+        std::unique_ptr<TimeSpanPredictor> LowerExecutionTimePredictor;
+
+        /// Should be placed in RunNext's start.
+        /// NO MUTEX LOCK
+        inline void TimespanMeasurementStart();
+        /// Should be placed after each RunNext's member run.
+        /// LOCKS MUTEX
+        inline void TimespanMeasurementStop();
 
         /// @brief ShouldRunNextModuleFromCurrentMemberIndex
         ///        && ShouldTryRunNextGroupFromCurrentMemberIndex

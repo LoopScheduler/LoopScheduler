@@ -24,11 +24,14 @@
 #include <utility>
 
 #include "Module.h"
+#include "BiasedEMATimeSpanPredictor.h"
 
 namespace LoopScheduler
 {
     SequentialGroup::SequentialGroup(
-            std::vector<SequentialGroupMember> Members
+            std::vector<SequentialGroupMember> Members,
+            std::unique_ptr<TimeSpanPredictor> HigherExecutionTimePredictor,
+            std::unique_ptr<TimeSpanPredictor> LowerExecutionTimePredictor
         ) : Members(Members), CurrentMemberIndex(-1), CurrentMemberRunsCount(0), RunningThreadsCount(0)
     {
         std::vector<std::shared_ptr<Group>> member_groups;
@@ -44,6 +47,25 @@ namespace LoopScheduler
         for (auto& member : Members)
             if (std::holds_alternative<std::shared_ptr<Group>>(member))
                 GroupMembers.push_back(std::get<std::shared_ptr<Group>>(member));
+
+        if (HigherExecutionTimePredictor == nullptr)
+            HigherExecutionTimePredictor = std::unique_ptr<BiasedEMATimeSpanPredictor>(
+                new BiasedEMATimeSpanPredictor(
+                    0,
+                    BiasedEMATimeSpanPredictor::DEFAULT_FAST_ALPHA,
+                    BiasedEMATimeSpanPredictor::DEFAULT_SLOW_ALPHA
+                )
+            );
+        if (LowerExecutionTimePredictor == nullptr)
+            LowerExecutionTimePredictor = std::unique_ptr<BiasedEMATimeSpanPredictor>(
+                new BiasedEMATimeSpanPredictor(
+                    0,
+                    BiasedEMATimeSpanPredictor::DEFAULT_SLOW_ALPHA,
+                    BiasedEMATimeSpanPredictor::DEFAULT_FAST_ALPHA
+                )
+            );
+        this->HigherExecutionTimePredictor = std::move(HigherExecutionTimePredictor);
+        this->LowerExecutionTimePredictor = std::move(LowerExecutionTimePredictor);
     }
 
     class IncrementGuardLockingOnDecrement
@@ -69,6 +91,7 @@ namespace LoopScheduler
         std::unique_lock<std::shared_mutex> lock(MembersSharedMutex);
         if (ShouldIncrementCurrentMemberIndex())
         {
+            TimespanMeasurementStart();
             CurrentMemberIndex++;
             CurrentMemberRunsCount = 0;
         }
@@ -85,6 +108,7 @@ namespace LoopScheduler
                 LastModuleLowerPredictedTimeSpan = member->PredictLowerExecutionTime();
                 lock.unlock();
                 token.Run();
+                TimespanMeasurementStop();
             }
             else
             {
@@ -103,11 +127,38 @@ namespace LoopScheduler
                 lock.unlock();
 
                 success = member->RunNext(max_time);
+                TimespanMeasurementStop();
             }
             NextEventConditionVariable.notify_all();
             return success;
         }
         return false;
+    }
+
+    inline void SequentialGroup::TimespanMeasurementStart()
+    {
+        if (CurrentMemberIndex == -1)
+        {
+            IterationStartTime = std::chrono::steady_clock::now();
+        }
+    }
+    inline void SequentialGroup::TimespanMeasurementStop()
+    {
+        std::unique_lock<std::shared_mutex> lock(MembersSharedMutex);
+        if ((CurrentMemberIndex == (int)Members.size() - 1)
+            && (RunningThreadsCount == 0)
+            && (
+                CurrentMemberIndex == -1
+                || (std::holds_alternative<std::shared_ptr<Module>>(Members[CurrentMemberIndex]) ?
+                    (CurrentMemberRunsCount != 0)
+                    : (std::get<std::shared_ptr<Group>>(Members[CurrentMemberIndex])->IsDone()))
+            )) // IsDone
+        {
+            std::chrono::duration<double> duration = std::chrono::steady_clock::now() - IterationStartTime;
+            double time = duration.count();
+            HigherExecutionTimePredictor->ReportObservation(time);
+            LowerExecutionTimePredictor->ReportObservation(time);
+        }
     }
 
     bool SequentialGroup::IsRunAvailable(double MaxEstimatedExecutionTime)
@@ -282,6 +333,17 @@ namespace LoopScheduler
     {
         std::shared_lock<std::shared_mutex> lock(MembersSharedMutex);
         return PredictRemainingExecutionTimeNoLock<false>();
+    }
+
+    double SequentialGroup::PredictHigherExecutionTime()
+    {
+        std::shared_lock<std::shared_mutex> lock(MembersSharedMutex);
+        return HigherExecutionTimePredictor->Predict();
+    }
+    double SequentialGroup::PredictLowerExecutionTime()
+    {
+        std::shared_lock<std::shared_mutex> lock(MembersSharedMutex);
+        return LowerExecutionTimePredictor->Predict();
     }
 
     bool SequentialGroup::UpdateLoop(Loop * LoopPtr)
