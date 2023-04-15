@@ -177,12 +177,27 @@ namespace LoopScheduler
                 auto& g = std::get<std::shared_ptr<Group>>(member.Member);
                 if (
                         ExtendIterationForAdditionalGroupRuns
+                        && MaxEstimatedExecutionTime != 0 // Not when MaxEstimatedExecutionTime is not specified
                         && g->PredictHigherExecutionTime() <= MaxEstimatedExecutionTime
                     )
                 {
                     MainQueue.push_back(*i);
-                    SecondaryQueue.erase(i++);
+                    int temp = *i;
+                    //SecondaryQueue.erase(i++);
+                    for (std::list<int>::iterator j = SecondaryQueue.begin(); j != SecondaryQueue.end();)
+                    {
+                        if (temp == *j)
+                            SecondaryQueue.erase(j++);
+                        else
+                            j++;
+                    }
                     g->StartNextIteration();
+                    if (RunGroup(g, lock, MaxEstimatedExecutionTime))
+                    {
+                        return true;
+                    }
+                    // The list is modified.
+                    return false;
                 }
                 else if (g->IsRunAvailable(MaxEstimatedExecutionTime))
                 {

@@ -68,6 +68,21 @@ namespace LoopScheduler
         this->LowerExecutionTimePredictor = std::move(LowerExecutionTimePredictor);
     }
 
+    class IncrementGuard
+    {
+    private:
+        int& num;
+    public:
+        IncrementGuard(int& num) : num(num)
+        {
+            num++;
+        }
+        ~IncrementGuard()
+        {
+            num--;
+        }
+    };
+
     class IncrementGuardLockingOnDecrement
     {
     private:
@@ -101,19 +116,21 @@ namespace LoopScheduler
             auto token = member->GetRunningToken();
             if (token.CanRun())
             {
-                IncrementGuardLockingOnDecrement increment_guard(RunningThreadsCount, lock);
+                IncrementGuard increment_guard(RunningThreadsCount);
                 CurrentMemberRunsCount++;
                 LastModuleStartTime = std::chrono::steady_clock::now();
                 LastModuleHigherPredictedTimeSpan = member->PredictHigherExecutionTime();
                 LastModuleLowerPredictedTimeSpan = member->PredictLowerExecutionTime();
                 lock.unlock();
                 token.Run();
-                TimespanMeasurementStop();
+                lock.lock(); // Lock for both increment_guard and TimespanMeasurementStop()
             }
             else
             {
                 return false;
             }
+            TimespanMeasurementStop();
+            lock.unlock(); // Unlock after both increment_guard and TimespanMeasurementStop()
             NextEventConditionVariable.notify_all();
             return true;
         }
@@ -121,14 +138,17 @@ namespace LoopScheduler
         {
             bool success = false;
             {
-                IncrementGuardLockingOnDecrement increment_guard(RunningThreadsCount, lock);
+                IncrementGuard increment_guard(RunningThreadsCount);
                 CurrentMemberRunsCount++;
                 auto& member = std::get<std::shared_ptr<Group>>(Members[CurrentMemberIndex]);
                 lock.unlock();
 
                 success = member->RunNext(max_time);
-                TimespanMeasurementStop();
+
+                lock.lock(); // Lock for both increment_guard and TimespanMeasurementStop()
             }
+            TimespanMeasurementStop();
+            lock.unlock(); // Unlock after both increment_guard and TimespanMeasurementStop()
             NextEventConditionVariable.notify_all();
             return success;
         }
@@ -144,9 +164,8 @@ namespace LoopScheduler
     }
     inline void SequentialGroup::TimespanMeasurementStop()
     {
-        std::unique_lock<std::shared_mutex> lock(MembersSharedMutex);
         if ((CurrentMemberIndex == (int)Members.size() - 1)
-            && (RunningThreadsCount == 0)
+            && (RunningThreadsCount == 0) // Called after increment_guard is destructed => already decremented
             && (
                 CurrentMemberIndex == -1
                 || (std::holds_alternative<std::shared_ptr<Module>>(Members[CurrentMemberIndex]) ?

@@ -94,7 +94,7 @@ namespace LoopScheduler
         /// NO MUTEX LOCK
         inline void TimespanMeasurementStart();
         /// Should be placed after each RunNext's member run.
-        /// LOCKS MUTEX
+        /// NO MUTEX LOCK
         inline void TimespanMeasurementStop();
 
         /// @brief ShouldRunNextModuleFromCurrentMemberIndex

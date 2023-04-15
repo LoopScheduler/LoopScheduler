@@ -50,7 +50,9 @@ namespace LoopScheduler
         /// @param ExtendIterationForAdditionalGroupRuns Whether a member group with RunSharesAfterFirstRun > 0
         ///                                              can start a new iteration and thus extend the time for
         ///                                              IsDone to be true again
-        ///                                              for this group to start a new iteration.
+        ///                                              for this group to be able to start a new iteration,
+        ///                                              ONLY when MaxEstimatedExecutionTime is provided
+        ///                                              through RunNext(...).
         ///                                              Use this parameter carefully, it could cause problems.
         ///                                              Setting this to true can be useful when this group is
         ///                                              a member of a SequentialGroup.
