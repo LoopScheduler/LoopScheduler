@@ -403,6 +403,7 @@ namespace LoopScheduler
 
     bool ParallelGroup::IsDone()
     {
+        std::shared_lock<std::shared_mutex> lock(MembersSharedMutex);
         return MainQueue.size() == 0;
     }
 
