@@ -121,6 +121,8 @@ namespace LoopScheduler
         std::map<std::shared_ptr<Module>, ModuleRunCountAndPredictedStopTimes> ModulesRunCountsAndPredictedStopTimes;
         std::map<std::shared_ptr<Group>, integer> GroupsRunCounts;
 
+        /// Must be locked BEFORE MembersSharedMutex lock
+        /// when modifying members before NextEventConditionVariable.notify_all().
         std::mutex NextEventConditionMutex;
         std::condition_variable NextEventConditionVariable;
 

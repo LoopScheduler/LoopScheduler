@@ -82,22 +82,30 @@ namespace LoopScheduler
         int& counter;
         std::unique_lock<std::shared_mutex>& lock;
         std::condition_variable& counter_cv;
+        std::mutex& counter_cv_mutex;
     public:
         DoubleIncrementGuardLockingAndCountingOnDecrement(
             int& num1, int& num2, int& counter,
             std::unique_lock<std::shared_mutex>& lock,
-            std::condition_variable& counter_cv) : num1(num1), num2(num2), counter(counter), lock(lock), counter_cv(counter_cv)
+            std::condition_variable& counter_cv,
+            std::mutex& counter_cv_mutex) : num1(num1), num2(num2),
+                                            counter(counter),
+                                            lock(lock),
+                                            counter_cv(counter_cv), counter_cv_mutex(counter_cv_mutex)
         {
             num1++;
             num2++;
         }
         ~DoubleIncrementGuardLockingAndCountingOnDecrement()
         {
+            // Lock before MembersSharedMutex lock for modifications before notify_all()
+            std::unique_lock<std::mutex> cv_lock(counter_cv_mutex);
             lock.lock();
             num2--;
             num1--;
             counter++;
             lock.unlock();
+            cv_lock.unlock();
             counter_cv.notify_all();
         }
     };
@@ -234,7 +242,8 @@ namespace LoopScheduler
             auto& runinfo = ModulesRunCountsAndPredictedStopTimes[m];
             {
                 DoubleIncrementGuardLockingAndCountingOnDecrement increment_guard(
-                    runinfo.RunCount.value, RunningThreadsCount, NotifyingCounter, lock, NextEventConditionVariable
+                    runinfo.RunCount.value, RunningThreadsCount, NotifyingCounter, lock,
+                    NextEventConditionVariable, NextEventConditionMutex
                 );
                 runinfo.StartTime = std::chrono::steady_clock::now();
                 runinfo.HigherPredictedTimeSpan = m->PredictHigherExecutionTime();
@@ -255,7 +264,8 @@ namespace LoopScheduler
         bool success;
         {
             DoubleIncrementGuardLockingAndCountingOnDecrement increment_guard(
-                runcounts.value, RunningThreadsCount, NotifyingCounter, lock, NextEventConditionVariable
+                runcounts.value, RunningThreadsCount, NotifyingCounter, lock,
+                NextEventConditionVariable, NextEventConditionMutex
             );
             lock.unlock();
             success = g->RunNext(MaxEstimatedExecutionTime);
@@ -373,6 +383,7 @@ namespace LoopScheduler
         lock.unlock();
 
         const auto predicate = [this, start_notifying_counter] {
+            // NextEventConditionMutex already locked before this MembersSharedMutex lock
             std::shared_lock<std::shared_mutex> lock(MembersSharedMutex);
             return start_notifying_counter != NotifyingCounter;
         };
@@ -416,7 +427,7 @@ namespace LoopScheduler
         std::shared_lock<std::shared_mutex> lock(MembersSharedMutex);
         if (RunningThreadsCount == 0)
             return 0;
-        double result = 0.000001;
+        double result = MNIMAL_TIME;
         auto now = std::chrono::steady_clock::now();
         for (auto& item : ModulesRunCountsAndPredictedStopTimes)
         {
@@ -435,7 +446,7 @@ namespace LoopScheduler
         std::shared_lock<std::shared_mutex> lock(MembersSharedMutex);
         if (RunningThreadsCount == 0)
             return 0;
-        double result = 0.000001;
+        double result = MNIMAL_TIME;
         auto now = std::chrono::steady_clock::now();
         for (auto& item : ModulesRunCountsAndPredictedStopTimes)
         {

@@ -81,6 +81,8 @@ namespace LoopScheduler
         double LastModuleHigherPredictedTimeSpan;
         double LastModuleLowerPredictedTimeSpan;
 
+        /// Must be locked BEFORE MembersSharedMutex lock
+        /// when modifying members before NextEventConditionVariable.notify_all().
         std::mutex NextEventConditionMutex;
         std::condition_variable NextEventConditionVariable;
 

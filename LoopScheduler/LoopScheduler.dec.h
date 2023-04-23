@@ -25,6 +25,8 @@
 
 namespace LoopScheduler
 {
+    /// @brief Used to indicate the smallest duration.
+    constexpr double MNIMAL_TIME = 0.000001;
     class Loop;
     class Group;
     class ModuleHoldingGroup;

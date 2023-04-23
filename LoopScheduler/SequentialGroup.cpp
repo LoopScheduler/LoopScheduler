@@ -104,6 +104,7 @@ namespace LoopScheduler
     bool SequentialGroup::RunNext(double MaxEstimatedExecutionTime)
     {
         std::unique_lock<std::shared_mutex> lock(MembersSharedMutex);
+        std::unique_lock<std::mutex> cv_lock(NextEventConditionMutex, std::defer_lock);
         if (ShouldIncrementCurrentMemberIndex())
         {
             TimespanMeasurementStart();
@@ -123,6 +124,7 @@ namespace LoopScheduler
                 LastModuleLowerPredictedTimeSpan = member->PredictLowerExecutionTime();
                 lock.unlock();
                 token.Run();
+                cv_lock.lock(); // Lock before MembersSharedMutex lock for modifications before notify_all()
                 lock.lock(); // Lock for both increment_guard and TimespanMeasurementStop()
             }
             else
@@ -131,6 +133,7 @@ namespace LoopScheduler
             }
             TimespanMeasurementStop();
             lock.unlock(); // Unlock after both increment_guard and TimespanMeasurementStop()
+            cv_lock.unlock(); // Unlock after MembersSharedMutex unlock after modifications before notify_all()
             NextEventConditionVariable.notify_all();
             return true;
         }
@@ -145,10 +148,12 @@ namespace LoopScheduler
 
                 success = member->RunNext(max_time);
 
+                cv_lock.lock(); // Lock before MembersSharedMutex lock for modifications before notify_all()
                 lock.lock(); // Lock for both increment_guard and TimespanMeasurementStop()
             }
             TimespanMeasurementStop();
             lock.unlock(); // Unlock after both increment_guard and TimespanMeasurementStop()
+            cv_lock.unlock(); // Unlock after MembersSharedMutex unlock after modifications before notify_all()
             NextEventConditionVariable.notify_all();
             return success;
         }
@@ -247,7 +252,7 @@ namespace LoopScheduler
         }
 
         const auto predicate = [this, &lock, &MaxEstimatedExecutionTime, &wait_for_next_module, &wait_for_next_group, &max_exec_time] {
-            lock.lock();
+            lock.lock(); // NextEventConditionMutex already locked before this MembersSharedMutex lock
             if (ShouldIncrementCurrentMemberIndex())
             {
                 return true;
@@ -409,7 +414,9 @@ namespace LoopScheduler
                         OutputMaxEstimatedExecutionTime = PredictRemainingExecutionTimeNoLock<false>();
                     else
                         OutputMaxEstimatedExecutionTime = std::min(InputMaxEstimatedExecutionTime, PredictRemainingExecutionTimeNoLock<false>());
-                    return true;
+                    // Return false when there's no time left
+                    // to prevent RunningThreadsCount to increase pointlessly and block the loop.
+                    return OutputMaxEstimatedExecutionTime > MNIMAL_TIME;
                 }
             }
             else
@@ -444,12 +451,12 @@ namespace LoopScheduler
             if constexpr (Higher)
                 return std::max(
                     LastModuleHigherPredictedTimeSpan - duration.count(),
-                    0.000001
+                    MNIMAL_TIME
                 );
             else
                 return std::max(
                     LastModuleLowerPredictedTimeSpan - duration.count(),
-                    0.000001
+                    MNIMAL_TIME
                 );
             
         }
@@ -459,12 +466,12 @@ namespace LoopScheduler
             if constexpr (Higher)
                 return std::max(
                     std::get<std::shared_ptr<Group>>(Members[CurrentMemberIndex])->PredictHigherRemainingExecutionTime(),
-                    0.000001
+                    MNIMAL_TIME
                 );
             else
                 return std::max(
                     std::get<std::shared_ptr<Group>>(Members[CurrentMemberIndex])->PredictLowerRemainingExecutionTime(),
-                    0.000001
+                    MNIMAL_TIME
                 );
         }
     }

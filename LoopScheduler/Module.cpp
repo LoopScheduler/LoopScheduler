@@ -339,6 +339,8 @@ namespace LoopScheduler
         token.ThreadPtr = new std::thread([this, MutexPtr, ShouldStopPtr, MaxWaitingTimeAfterStop, TotalMaxWaitingTime] {
             if (TotalMaxWaitingTime == 0)
             {
+                if (MaxWaitingTimeAfterStop <= MNIMAL_TIME)
+                    return; // Prevent unnecessary waiting or potential freezing
                 while (true)
                 {
                     auto architecture = LoopPtr->GetArchitecture();
@@ -356,6 +358,8 @@ namespace LoopScheduler
                 while (remaining_time > 0)
                 {
                     double time = std::min(remaining_time, MaxWaitingTimeAfterStop);
+                    if (time <= MNIMAL_TIME)
+                        return; // Prevent unnecessary waiting or potential freezing
                     auto architecture = LoopPtr->GetArchitecture();
                     if (!architecture->RunNext(time))
                         architecture->WaitForAvailability(time, time * 0.25);
