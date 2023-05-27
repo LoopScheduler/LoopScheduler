@@ -74,6 +74,7 @@ namespace LoopScheduler
     /// Increments the 2 numbers on construction without locking.
     /// Decrements the 2 numbers on destruction with locking.
     /// Increments the counter on destruction too.
+    /// lock (guard) remains locked after destruction, but counter_cv_mutex is unlocked after destruction.
     class DoubleIncrementGuardLockingAndCountingOnDecrement
     {
     private:
@@ -81,17 +82,15 @@ namespace LoopScheduler
         int& num2;
         int& counter;
         std::unique_lock<std::shared_mutex>& lock;
-        std::condition_variable& counter_cv;
         std::mutex& counter_cv_mutex;
     public:
         DoubleIncrementGuardLockingAndCountingOnDecrement(
             int& num1, int& num2, int& counter,
             std::unique_lock<std::shared_mutex>& lock,
-            std::condition_variable& counter_cv,
             std::mutex& counter_cv_mutex) : num1(num1), num2(num2),
                                             counter(counter),
                                             lock(lock),
-                                            counter_cv(counter_cv), counter_cv_mutex(counter_cv_mutex)
+                                            counter_cv_mutex(counter_cv_mutex)
         {
             num1++;
             num2++;
@@ -104,9 +103,7 @@ namespace LoopScheduler
             num2--;
             num1--;
             counter++;
-            lock.unlock();
             cv_lock.unlock();
-            counter_cv.notify_all();
         }
     };
 
@@ -243,17 +240,23 @@ namespace LoopScheduler
             {
                 DoubleIncrementGuardLockingAndCountingOnDecrement increment_guard(
                     runinfo.RunCount.value, RunningThreadsCount, NotifyingCounter, lock,
-                    NextEventConditionVariable, NextEventConditionMutex
+                    NextEventConditionMutex
                 );
                 runinfo.StartTime = std::chrono::steady_clock::now();
                 runinfo.HigherPredictedTimeSpan = m->PredictHigherExecutionTime();
                 runinfo.LowerPredictedTimeSpan = m->PredictLowerExecutionTime();
                 lock.unlock();
                 token.Run();
-            }
-            lock.lock();
+            } // lock locked by DoubleIncrementGuardLockingAndCountingOnDecrement's destructor
+            // runinfo hasn't been erased as lock isn't unlocked after the decrement
+            // made by DoubleIncrementGuardLockingAndCountingOnDecrement's destructor.
+            // If this condition is true, this is the last synchronized access to runinfo,
+            // therefore, we can safely erase it.
             if (runinfo.RunCount.value == 0)
                 ModulesRunCountsAndPredictedStopTimes.erase(m);
+            lock.unlock();
+            NextEventConditionVariable.notify_all();
+            lock.lock();
             return true;
         }
         return false;
@@ -265,14 +268,20 @@ namespace LoopScheduler
         {
             DoubleIncrementGuardLockingAndCountingOnDecrement increment_guard(
                 runcounts.value, RunningThreadsCount, NotifyingCounter, lock,
-                NextEventConditionVariable, NextEventConditionMutex
+                NextEventConditionMutex
             );
             lock.unlock();
             success = g->RunNext(MaxEstimatedExecutionTime);
-        }
-        lock.lock();
+        } // lock locked by DoubleIncrementGuardLockingAndCountingOnDecrement's destructor
+        // runcounts hasn't been erased as lock isn't unlocked after the decrement
+        // made by DoubleIncrementGuardLockingAndCountingOnDecrement's destructor.
+        // If this condition is true, this is the last synchronized access to runcounts,
+        // therefore, we can safely erase it.
         if (runcounts.value == 0)
             GroupsRunCounts.erase(g);
+        lock.unlock();
+        NextEventConditionVariable.notify_all();
+        lock.lock();
         return success;
     }
 
