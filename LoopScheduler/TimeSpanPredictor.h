@@ -37,5 +37,12 @@ namespace LoopScheduler
         ///
         /// This should not change the predictor's state (or modify member variables).
         virtual double Predict() = 0;
+        /// @brief Creates a new copy of the object and returns the pointer.
+        ///
+        /// WARNING: Possible memory leak if not managed well.
+        /// The returned pointer can be immediately turned into
+        /// a smart pointer (i.e., std::shared_ptr)
+        /// by passing it to a smart pointer constructor.
+        virtual TimeSpanPredictor * Copy() = 0;
     };
 }

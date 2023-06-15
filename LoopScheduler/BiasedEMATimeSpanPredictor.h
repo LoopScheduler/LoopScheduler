@@ -34,6 +34,7 @@ namespace LoopScheduler
         virtual void Initialize(double TimeSpan) override;
         virtual void ReportObservation(double TimeSpan) override;
         virtual double Predict() override;
+        virtual TimeSpanPredictor * Copy() override;
 
         static constexpr double DEFAULT_FAST_ALPHA = 0.2;
         static constexpr double DEFAULT_SLOW_ALPHA = 0.05;

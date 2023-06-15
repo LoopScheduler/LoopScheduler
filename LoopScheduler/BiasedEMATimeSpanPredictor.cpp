@@ -43,4 +43,9 @@ namespace LoopScheduler
     {
         return TimeSpanBEMA;
     }
+
+    TimeSpanPredictor * BiasedEMATimeSpanPredictor::Copy()
+    {
+        return new BiasedEMATimeSpanPredictor(*this);
+    }
 }
