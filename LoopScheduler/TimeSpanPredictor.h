@@ -25,6 +25,7 @@
 namespace LoopScheduler
 {
     /// @brief An abstract class to predict the future timespans for modules' run times.
+    /// NOT thread-safe.
     class TimeSpanPredictor
     {
     public:
@@ -36,7 +37,7 @@ namespace LoopScheduler
         /// @brief Returns the predicted timespan.
         ///
         /// This should not change the predictor's state (or modify member variables).
-        virtual double Predict() = 0;
+        virtual double Predict() const = 0;
         /// @brief Creates a new copy of the object and returns the pointer.
         ///
         /// WARNING: Possible memory leak if not managed well.

@@ -39,7 +39,7 @@ namespace LoopScheduler
             TimeSpanBEMA = TimeSpanBEMA + DecrementAlpha * (TimeSpan - TimeSpanBEMA);
     }
 
-    double BiasedEMATimeSpanPredictor::Predict()
+    double BiasedEMATimeSpanPredictor::Predict() const
     {
         return TimeSpanBEMA;
     }
