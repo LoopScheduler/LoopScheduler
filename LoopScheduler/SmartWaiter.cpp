@@ -18,19 +18,23 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-/// @file LoopScheduler.h
-/// @brief Includes all LoopScheduler classes.
-///        This is the header to include to use LoopScheduler.
-
-#pragma once
-
-#include "Loop.h"
-#include "Group.h"
-#include "ModuleHoldingGroup.h"
-#include "SequentialGroup.h"
-#include "ParallelGroup.h"
-#include "ParallelGroupMember.h"
-#include "Module.h"
-#include "TimeSpanPredictor.h"
-#include "BiasedEMATimeSpanPredictor.h"
 #include "SmartWaiter.h"
+
+#include "BiasedEMATimeSpanPredictor.h"
+
+namespace LoopScheduler
+{
+    SmartWaiter::SmartWaiter(std::unique_ptr<TimeSpanPredictor> HigherErrorPredictor = nullptr)
+    {
+        if (HigherErrorPredictor == nullptr)
+            HigherErrorPredictor = std::unique_ptr<BiasedEMATimeSpanPredictor>(
+                new BiasedEMATimeSpanPredictor(
+                    0,
+                    BiasedEMATimeSpanPredictor::DEFAULT_FAST_ALPHA,
+                    BiasedEMATimeSpanPredictor::DEFAULT_SLOW_ALPHA
+                )
+            );
+
+        this->HigherErrorPredictor = std::move(HigherErrorPredictor);
+    }
+}

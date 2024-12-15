@@ -36,4 +36,5 @@ namespace LoopScheduler
     class Module;
     class TimeSpanPredictor;
     class BiasedEMATimeSpanPredictor;
+    class SmartWaiter;
 }
