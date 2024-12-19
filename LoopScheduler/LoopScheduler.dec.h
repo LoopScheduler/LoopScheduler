@@ -23,6 +23,10 @@
 
 #pragma once
 
+#ifndef LOOPSCHEDULER_USE_SMART_CV_WAITER
+    #define LOOPSCHEDULER_USE_SMART_CV_WAITER 1
+#endif
+
 namespace LoopScheduler
 {
     /// @brief Used to indicate the smallest duration.

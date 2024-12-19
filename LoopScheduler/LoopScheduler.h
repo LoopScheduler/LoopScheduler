@@ -22,11 +22,11 @@
 /// @brief Includes all LoopScheduler classes.
 ///        This is the header to include to use LoopScheduler.
 
+#pragma once
+
 #ifndef LOOPSCHEDULER_USE_SMART_CV_WAITER
     #define LOOPSCHEDULER_USE_SMART_CV_WAITER 1
 #endif
-
-#pragma once
 
 #include "Loop.h"
 #include "Group.h"
