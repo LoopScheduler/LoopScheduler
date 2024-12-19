@@ -28,6 +28,8 @@
 #include <mutex>
 #include <shared_mutex>
 
+#include "TimeSpanPredictor.h"
+
 namespace LoopScheduler
 {
     /// @brief Performs std::condition_variable::wait_for in a smarter way,
@@ -47,7 +49,7 @@ namespace LoopScheduler
     };
 
     template <typename PredicateType>
-    bool SmartCVWaiter::WaitFor<PredicateType>(std::condition_variable& cv, std::unique_lock<std::mutex>& cv_lock,
+    bool SmartCVWaiter::WaitFor(std::condition_variable& cv, std::unique_lock<std::mutex>& cv_lock,
             std::chrono::duration<double> time, PredicateType predicate)
     {
         double error_prediction;

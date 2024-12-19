@@ -24,7 +24,7 @@
 
 namespace LoopScheduler
 {
-    SmartCVWaiter::SmartCVWaiter(std::unique_ptr<TimeSpanPredictor> HigherErrorPredictor = nullptr)
+    SmartCVWaiter::SmartCVWaiter(std::unique_ptr<TimeSpanPredictor> HigherErrorPredictor)
     {
         if (HigherErrorPredictor == nullptr)
             HigherErrorPredictor = std::unique_ptr<BiasedEMATimeSpanPredictor>(
