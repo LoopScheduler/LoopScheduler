@@ -33,4 +33,4 @@
 #include "Module.h"
 #include "TimeSpanPredictor.h"
 #include "BiasedEMATimeSpanPredictor.h"
-#include "SmartWaiter.h"
+#include "SmartCVWaiter.h"

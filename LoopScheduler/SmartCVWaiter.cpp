@@ -18,13 +18,13 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#include "SmartWaiter.h"
+#include "SmartCVWaiter.h"
 
 #include "BiasedEMATimeSpanPredictor.h"
 
 namespace LoopScheduler
 {
-    SmartWaiter::SmartWaiter(std::unique_ptr<TimeSpanPredictor> HigherErrorPredictor = nullptr)
+    SmartCVWaiter::SmartCVWaiter(std::unique_ptr<TimeSpanPredictor> HigherErrorPredictor = nullptr)
     {
         if (HigherErrorPredictor == nullptr)
             HigherErrorPredictor = std::unique_ptr<BiasedEMATimeSpanPredictor>(
