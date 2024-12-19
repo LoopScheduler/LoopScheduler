@@ -33,13 +33,13 @@ namespace LoopScheduler
     /// @brief Performs std::condition_variable::wait_for in a smarter way,
     ///        by accounting for the historical wait_for timing error
     ///        to wait more predictably.
-    class SmartCVWaiter
+    class SmartCVWaiter final
     {
     public:
         SmartCVWaiter(std::unique_ptr<TimeSpanPredictor> HigherErrorPredictor = nullptr);
 
         template <typename PredicateType>
-        bool WaitFor(std::condition_variable cv, std::unique_lock<std::mutex>& cv_lock,
+        bool WaitFor(std::condition_variable& cv, std::unique_lock<std::mutex>& cv_lock,
                 std::chrono::duration<double> time, PredicateType predicate);
     private:
         std::unique_ptr<TimeSpanPredictor> HigherErrorPredictor;
@@ -47,7 +47,7 @@ namespace LoopScheduler
     };
 
     template <typename PredicateType>
-    bool SmartCVWaiter::WaitFor<PredicateType>(std::condition_variable cv, std::unique_lock<std::mutex>& cv_lock,
+    bool SmartCVWaiter::WaitFor<PredicateType>(std::condition_variable& cv, std::unique_lock<std::mutex>& cv_lock,
             std::chrono::duration<double> time, PredicateType predicate)
     {
         double error_prediction;
