@@ -27,6 +27,7 @@
 #include "BiasedEMATimeSpanPredictor.h"
 #include "Loop.h"
 #include "Group.h"
+#include "SmartCVWaiter.h"
 
 namespace LoopScheduler
 {
@@ -34,7 +35,8 @@ namespace LoopScheduler
             bool CanRunInParallel,
             std::unique_ptr<TimeSpanPredictor> HigherExecutionTimePredictor,
             std::unique_ptr<TimeSpanPredictor> LowerExecutionTimePredictor,
-            bool UseCustomCanRun
+            bool UseCustomCanRun,
+            std::shared_ptr<SmartCVWaiter> CVWaiter
         ) : CanRunPolicy(CanRunInParallel ? (
                     (UseCustomCanRun ? CanRunPolicyType::CanRunInParallelCustom : CanRunPolicyType::CanRunInParallel)
                 ) : (
@@ -58,8 +60,12 @@ namespace LoopScheduler
                     BiasedEMATimeSpanPredictor::DEFAULT_FAST_ALPHA
                 )
             );
+        if (CVWaiter == nullptr)
+            CVWaiter = std::shared_ptr<SmartCVWaiter>(new SmartCVWaiter());
+
         this->HigherExecutionTimePredictor = std::move(HigherExecutionTimePredictor);
         this->LowerExecutionTimePredictor = std::move(LowerExecutionTimePredictor);
+        this->CVWaiter = CVWaiter;
     }
 
     class SetToTrueGuard
@@ -209,6 +215,10 @@ namespace LoopScheduler
 
     void Module::WaitForAvailability(double MaxWaitingTime)
     {
+        std::chrono::time_point<std::chrono::steady_clock> start;
+        if (MaxWaitingTime != 0)
+            start = std::chrono::steady_clock::now();
+
         std::shared_lock<std::shared_mutex> lock(SharedMutex);
         if (_IsAvailable)
             return;
@@ -219,15 +229,21 @@ namespace LoopScheduler
             return _IsAvailable;
         };
 
-        std::unique_lock<std::mutex> c_lock(AvailabilityConditionMutex);
+        std::unique_lock<std::mutex> cv_lock(AvailabilityConditionMutex);
         if (MaxWaitingTime == 0)
-            AvailabilityConditionVariable.wait(c_lock, predicate);
+        {
+            AvailabilityConditionVariable.wait(cv_lock, predicate);
+        }
         else if (MaxWaitingTime > 0)
-            AvailabilityConditionVariable.wait_for(
-                c_lock,
-                std::chrono::duration<double>(MaxWaitingTime),
-                predicate
-            );
+        {
+            auto stop = start + std::chrono::duration<double>(MaxWaitingTime);
+            std::chrono::duration<double> time = stop - std::chrono::steady_clock::now();
+#if LOOPSCHEDULER_USE_SMART_CV_WAITER
+            CVWaiter->WaitFor(AvailabilityConditionVariable, cv_lock, time, predicate);
+#else
+            AvailabilityConditionVariable.wait_for(cv_lock, time, predicate);
+#endif
+        }
     }
 
     double Module::PredictHigherExecutionTime()

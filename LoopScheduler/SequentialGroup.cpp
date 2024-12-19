@@ -25,13 +25,15 @@
 
 #include "Module.h"
 #include "BiasedEMATimeSpanPredictor.h"
+#include "SmartCVWaiter.h"
 
 namespace LoopScheduler
 {
     SequentialGroup::SequentialGroup(
             std::vector<SequentialGroupMember> Members,
             std::unique_ptr<TimeSpanPredictor> HigherExecutionTimePredictor,
-            std::unique_ptr<TimeSpanPredictor> LowerExecutionTimePredictor
+            std::unique_ptr<TimeSpanPredictor> LowerExecutionTimePredictor,
+            std::shared_ptr<SmartCVWaiter> CVWaiter
         ) : Members(Members), CurrentMemberIndex(-1), CurrentMemberRunsCount(0), RunningThreadsCount(0)
     {
         std::vector<std::shared_ptr<Group>> member_groups;
@@ -64,8 +66,12 @@ namespace LoopScheduler
                     BiasedEMATimeSpanPredictor::DEFAULT_FAST_ALPHA
                 )
             );
+        if (CVWaiter == nullptr)
+            CVWaiter = std::shared_ptr<SmartCVWaiter>(new SmartCVWaiter());
+
         this->HigherExecutionTimePredictor = std::move(HigherExecutionTimePredictor);
         this->LowerExecutionTimePredictor = std::move(LowerExecutionTimePredictor);
+        this->CVWaiter = CVWaiter;
     }
 
     class IncrementGuard
@@ -281,9 +287,19 @@ namespace LoopScheduler
             lock.unlock(); // Locked after wait/wait_for
             std::unique_lock<std::mutex> cv_lock(NextEventConditionMutex);
             if (MaxWaitingTime == 0)
+            {
                 NextEventConditionVariable.wait(cv_lock, predicate);
+            }
             else if (MaxWaitingTime > 0)
-                NextEventConditionVariable.wait_for(cv_lock, std::chrono::duration<double>(MaxWaitingTime), predicate);
+            {
+                auto stop = start + std::chrono::duration<double>(MaxWaitingTime);
+                std::chrono::duration<double> time = stop - std::chrono::steady_clock::now();
+#if LOOPSCHEDULER_USE_SMART_CV_WAITER
+                CVWaiter->WaitFor(NextEventConditionVariable, cv_lock, time, predicate);
+#else
+                NextEventConditionVariable.wait_for(cv_lock, time, predicate);
+#endif
+            }
         }
 
         if (wait_for_next_module)

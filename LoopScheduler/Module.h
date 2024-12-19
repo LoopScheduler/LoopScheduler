@@ -51,11 +51,13 @@ namespace LoopScheduler
         /// @param UseCustomCanRun Whether to use the virtual CanRun to check for availability before running too.
         ///                        Doesn't support IsAvailable or WaitForAvailability, IsAvailable may return true when CanRun returns false.
         ///                        Only use custom CanRun if really needed.
+        /// @param CVWaiter One waiter can be shared between different objects or have different time predictors.
         Module(
             bool CanRunInParallel = false,
             std::unique_ptr<TimeSpanPredictor> HigherExecutionTimePredictor = nullptr,
             std::unique_ptr<TimeSpanPredictor> LowerExecutionTimePredictor = nullptr,
-            bool UseCustomCanRun = false
+            bool UseCustomCanRun = false,
+            std::shared_ptr<SmartCVWaiter> CVWaiter = nullptr
         );
         virtual ~Module() = default;
 
@@ -181,6 +183,7 @@ namespace LoopScheduler
 
         std::unique_ptr<TimeSpanPredictor> HigherExecutionTimePredictor;
         std::unique_ptr<TimeSpanPredictor> LowerExecutionTimePredictor;
+        std::shared_ptr<SmartCVWaiter> CVWaiter;
 
         /// @brief Always true if CanRunInParallel
         bool _IsAvailable;

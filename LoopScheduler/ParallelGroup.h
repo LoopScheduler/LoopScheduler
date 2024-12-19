@@ -62,11 +62,13 @@ namespace LoopScheduler
         ///                                     nullptr to use default.
         /// @param LowerExecutionTimePredictor Predictor to predict the lower execution time of the whole group.
         ///                                    nullptr to use default.
+        /// @param CVWaiter One waiter can be shared between different objects or have different time predictors.
         ParallelGroup(
             std::vector<ParallelGroupMember> Members,
             bool ExtendIterationForAdditionalGroupRuns = false,
             std::unique_ptr<TimeSpanPredictor> HigherExecutionTimePredictor = nullptr,
-            std::unique_ptr<TimeSpanPredictor> LowerExecutionTimePredictor = nullptr
+            std::unique_ptr<TimeSpanPredictor> LowerExecutionTimePredictor = nullptr,
+            std::shared_ptr<SmartCVWaiter> CVWaiter = nullptr
         );
         virtual bool RunNext(double MaxEstimatedExecutionTime = 0) override;
         virtual bool IsRunAvailable(double MaxEstimatedExecutionTime = 0) override;
@@ -103,6 +105,7 @@ namespace LoopScheduler
 
         std::unique_ptr<TimeSpanPredictor> HigherExecutionTimePredictor;
         std::unique_ptr<TimeSpanPredictor> LowerExecutionTimePredictor;
+        std::shared_ptr<SmartCVWaiter> CVWaiter;
 
         class integer // 0 by default
         {

@@ -25,6 +25,7 @@
 
 #include "Module.h"
 #include "BiasedEMATimeSpanPredictor.h"
+#include "SmartCVWaiter.h"
 
 namespace LoopScheduler
 {
@@ -32,7 +33,8 @@ namespace LoopScheduler
             std::vector<ParallelGroupMember> Members,
             bool ExtendIterationForAdditionalGroupRuns,
             std::unique_ptr<TimeSpanPredictor> HigherExecutionTimePredictor,
-            std::unique_ptr<TimeSpanPredictor> LowerExecutionTimePredictor
+            std::unique_ptr<TimeSpanPredictor> LowerExecutionTimePredictor,
+            std::shared_ptr<SmartCVWaiter> CVWaiter
         ) : Members(Members), ExtendIterationForAdditionalGroupRuns(ExtendIterationForAdditionalGroupRuns),
             RunningThreadsCount(0), NotifyingCounter(0), RunNextCount(0), MeasuringTimespan(false)
     {
@@ -62,8 +64,12 @@ namespace LoopScheduler
                     BiasedEMATimeSpanPredictor::DEFAULT_FAST_ALPHA
                 )
             );
+        if (CVWaiter == nullptr)
+            CVWaiter = std::shared_ptr<SmartCVWaiter>(new SmartCVWaiter());
+
         this->HigherExecutionTimePredictor = std::move(HigherExecutionTimePredictor);
         this->LowerExecutionTimePredictor = std::move(LowerExecutionTimePredictor);
+        this->CVWaiter = CVWaiter;
 
         StartNextIterationForThisGroup();
         for (auto& member : Members)
@@ -406,7 +412,11 @@ namespace LoopScheduler
         {
             auto stop = start + std::chrono::duration<double>(MaxWaitingTime);
             std::chrono::duration<double> time = stop - std::chrono::steady_clock::now();
+#if LOOPSCHEDULER_USE_SMART_CV_WAITER
+            CVWaiter->WaitFor(NextEventConditionVariable, cv_lock, time, predicate);
+#else
             NextEventConditionVariable.wait_for(cv_lock, time, predicate);
+#endif
         }
     }
 
